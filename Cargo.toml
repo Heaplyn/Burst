@@ -1,0 +1,9 @@
+[workspace]
+members = [
+    "rings/ring0/lexer",
+    "rings/ring0/ast",
+    "rings/ring1/parser",
+    "rings/ring2/elaboration",
+    "burst",
+]
+resolver = "2"
