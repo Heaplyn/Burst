@@ -7,33 +7,33 @@ pub enum Type {
     Pointer(Box<Type>),
     Refined {
         base: Box<Type>,
-        constraint: Box<Expr>, // Holds the "where <expr>" AST representation
+        constraint: Box<Expression>, // Holds the "where <expr>" AST representation
     },
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Expr {
+pub enum Expression {
     LiteralInt(i64),
     LiteralFloat(f64),
     Variable(String),
     BinaryOp {
         op: String,
-        lhs: Box<Expr>,
-        rhs: Box<Expr>,
+        lhs: Box<Expression>,
+        rhs: Box<Expression>,
     },
     Cast {
-        expr: Box<Expr>,
+        expr: Box<Expression>,
         target_type: Box<Type>,
     },
 }
 
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Stmt {
-    LetBinding { name: String, val: Expr },
-    Assignment { target: Expr, val: Expr },
-    Havoc(Expr),
+pub enum Statement {
+    LetBinding { name: String, val: Expression },
+    Assignment { target: Expression, val: Expression },
+    Havoc(Expression),
     Panic,
     Unreachable,
-    Interrupt { asm: String, target: Expr, body: Vec<Stmt> },
+    Interrupt { asm: String, target: Expression, body: Vec<Statement> },
 }

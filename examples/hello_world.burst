@@ -1,0 +1,4 @@
+fn main() {
+    // Prints a hello world trace message to the output buffer
+    output_trace('HELLO_WORLD', 0 as b8);
+}

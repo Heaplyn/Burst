@@ -30,11 +30,11 @@ pub enum Commands {
         #[arg(required = true)]
         code: String,
     },
-
     // run tests
     Test {
+        #[arg(short, long)]
         filter: Option<String>,
-    },
+    }
 }
 
 impl Cli {

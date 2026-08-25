@@ -4,7 +4,7 @@ use elaboration::ElaborationContext;
 use command_parser::{Cli, Commands}; // Import from command-parser
 
 fn run_pipeline(source_code: &str, verbose: bool) {
-    // 1. Run the Lexer
+    //Gets tokens from lexer
     let tokens: Vec<_> = Lexer::new(source_code).collect();
     if verbose {
         println!("Tokens: {:?}", tokens);
@@ -20,8 +20,8 @@ fn run_pipeline(source_code: &str, verbose: bool) {
 
             // 3. Run Elaboration / Constraint extraction
             let mut elab_ctx = ElaborationContext::new();
-            for stmt in &ast {
-                if let Err(e) = elab_ctx.elaborate_statement(stmt) {
+            for statement in &ast {
+                if let Err(e) = elab_ctx.elaborate_statement(statement) {
                     eprintln!("Elaboration Error: {}", e);
                     return;
                 }

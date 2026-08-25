@@ -1,4 +1,4 @@
-use ast::Stmt;
+use ast::Statement;
 
 
 pub struct ElaborationContext {
@@ -10,13 +10,13 @@ impl ElaborationContext {
         Self { constraints: Vec::new() }
     }
 
-    pub fn elaborate_statement(&mut self, stmt: &Stmt) -> Result<(), String> {
-        match stmt {
-            Stmt::Panic => {
+    pub fn elaborate_statement(&mut self, statement: &Statement) -> Result<(), String> {
+        match statement {
+            Statement::Panic => {
                 self.constraints.push("panic_state".to_string());
                 Ok(())
             }
-            Stmt::Unreachable => {
+            Statement::Unreachable => {
                 self.constraints.push("unreachable_state".to_string());
                 Ok(())
             }
@@ -32,7 +32,7 @@ mod tests {
     #[test]
     fn test_elaboration_basic() {
         let mut ctx = ElaborationContext::new();
-        ctx.elaborate_statement(&Stmt::Panic).unwrap();
+        ctx.elaborate_statement(&Statement::Panic).unwrap();
         assert_eq!(ctx.constraints, vec!["panic_state".to_string()]);
     }
 }

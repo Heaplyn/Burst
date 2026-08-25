@@ -1,4 +1,4 @@
-use ast::Stmt;
+use ast::Statement;
 use lexer::Token;
 
 
@@ -12,7 +12,7 @@ impl Parser {
         Self { tokens, position: 0 }
     }
 
-    pub fn parse(&mut self) -> Result<Vec<Stmt>, String> {
+    pub fn parse(&mut self) -> Result<Vec<Statement>, String> {
         let mut statements = Vec::new();
         while !self.is_at_end() {
             statements.push(self.parse_statement()?);
@@ -20,18 +20,18 @@ impl Parser {
         Ok(statements)
     }
 
-    fn parse_statement(&mut self) -> Result<Stmt, String> {
+    fn parse_statement(&mut self) -> Result<Statement, String> {
         let token = self.peek();
         match token {
             Some(Token::Panic) => {
                 self.advance();
                 self.consume(Token::Semicolon, "Expected ';' after panic")?;
-                Ok(Stmt::Panic)
+                Ok(Statement::Panic)
             }
             Some(Token::Unreachable) => {
                 self.advance();
                 self.consume(Token::Semicolon, "Expected ';' after unreachable")?;
-                Ok(Stmt::Unreachable)
+                Ok(Statement::Unreachable)
             }
             _ => Err(format!("Unexpected token: {:?}", token)),
         }
@@ -71,6 +71,6 @@ mod tests {
         let tokens = vec![Token::Panic, Token::Semicolon];
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().unwrap();
-        assert_eq!(ast, vec![Stmt::Panic]);
+        assert_eq!(ast, vec![Statement::Panic]);
     }
 }

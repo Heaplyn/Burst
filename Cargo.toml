@@ -4,7 +4,7 @@ members = [
     "rings/ring0/ast",
     "rings/ring1/parser",
     "rings/ring2/elaboration",
-    "rings/ring0/command_parser",
+    "rings/ring3/command_parser",
     "burst",
 ]
 resolver = "2"
