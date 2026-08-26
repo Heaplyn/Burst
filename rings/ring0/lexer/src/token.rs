@@ -14,7 +14,10 @@ pub struct Token {
 pub enum TokenKind {
     // ===== Keywords =====
     Function,
+    /// mutable by default
     Var,
+    /// immutable by default
+    Let,
     Mut,
     Return,
     Struct,

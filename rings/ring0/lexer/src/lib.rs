@@ -142,7 +142,8 @@ impl<'a> Lexer<'a> {
 
                 match identifier.as_str() {
                     "function" | "fn" => TokenKind::Function,
-                    "var" | "let" => TokenKind::Var,
+                    "var" => TokenKind::Var,
+                    "let" => TokenKind::Let,
                     "mut" => TokenKind::Mut,
                     "where" => TokenKind::Where,
                     "havoc" => TokenKind::Havoc,
@@ -159,6 +160,7 @@ impl<'a> Lexer<'a> {
                     "for" => TokenKind::For,
                     "loop" => TokenKind::Loop,
                     "return" => TokenKind::Return,
+                    "goto" => TokenKind::Goto,
                     other => {
                         if (other.starts_with('i') || other.starts_with('u') || other.starts_with('b') || other.starts_with('f'))
                             && other.len() > 1
@@ -230,5 +232,17 @@ impl<'a> Iterator for Lexer<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.NextToken()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_lexer() {
+        let Code = "fn main() { var x: i32 = 10; havoc x; }";
+        let Tokens: Vec<Token> = Lexer::New(Code).collect();
+        assert_eq!(Tokens[5].Kind, TokenKind::Var);
     }
 }

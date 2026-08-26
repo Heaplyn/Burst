@@ -30,7 +30,7 @@ impl Parser {
     }
 
     /// identifies what kind of top level thing we have
-    fn ParseItem(&mut self) -> Result<Layer, String> {
+    pub fn ParseItem(&mut self) -> Result<Layer, String> {
         let Tok = self.Peek().map(|t| &t.Kind);
         match Tok {
             Some(TokenKind::Function) => self.ParseFunction(),
@@ -40,7 +40,7 @@ impl Parser {
     }
 
     /// parses a struct definition
-    fn ParseStruct(&mut self) -> Result<Layer, String> {
+    pub fn ParseStruct(&mut self) -> Result<Layer, String> {
         self.Advance(); // consume 'struct'
         let Name = match self.Advance().map(|t| &t.Kind) {
             Some(TokenKind::Ident(n)) => n.clone(),
@@ -68,38 +68,20 @@ impl Parser {
     }
 
     /// handles both "name: type" and "type name"
-    fn ParseNameAndType(&mut self, context: &str) -> Result<(String, Type), String> {
-        let mut is_colon_style = false;
-        let mut offset = 0;
-       /*  while let Some(t) = self.PeekAt(offset).map(|tk| &tk.Kind) {
-            if matches!(t, TokenKind::Colon) { is_colon_style = true; break; }
-            if matches!(t, TokenKind::Comma) || matches!(t, TokenKind::Semicolon) || matches!(t, TokenKind::CloseParen) || matches!(t, TokenKind::CloseBrace) { break; }
-            offset += 1;
-        }*/
-       // 1. check if the very first token is definitely a type
-let starts_with_type = matches!(
-    self.Peek().map(|t| &t.Kind), 
-    Some(TokenKind::BitPreciseType { .. }) | Some(TokenKind::Star)
-);
-
-if !starts_with_type {
-    let mut offset = 0;
-    while let Some(t) = self.PeekAt(offset).map(|tk| &tk.Kind) {
-        if matches!(t, TokenKind::Colon) { 
-            is_colon_style = true; 
-            break; 
+    pub fn ParseNameAndType(&mut self, context: &str) -> Result<(String, Type), String> {
+        let mut found_type_colon = false;
+        if let Some(TokenKind::Ident(_)) = self.Peek().map(|t| &t.Kind) {
+            if let Some(TokenKind::Colon) = self.PeekAt(1).map(|t| &t.Kind) {
+                if !matches!(self.PeekAt(2).map(|t| &t.Kind), Some(TokenKind::Where)) {
+                    found_type_colon = true;
+                }
+            }
         }
-        // stop if we hit something that ends a name/type pair
-        if matches!(t, TokenKind::Comma) || matches!(t, TokenKind::CloseParen) { break; }
-        offset += 1;
-    }
-}
-        println!("{}", format!("is_colon_style: {}", is_colon_style));
-        println!("{}", format!("Peeked tokens: {:?}", (0..offset).filter_map(|i| self.PeekAt(i)).collect::<Vec<_>>()));
-        let (name, mut ty) = if is_colon_style {
+
+        let (name, mut ty) = if found_type_colon {
             let n = match self.Advance().map(|t| &t.Kind) {
                 Some(TokenKind::Ident(name)) => name.clone(),
-                _ => return Err(format!("Expected {} name before ':'", context)),
+                _ => unreachable!(),
             };
             self.Advance(); // consume ':'
             let t = self.ParseType()?;
@@ -132,7 +114,7 @@ if !starts_with_type {
     }
 
     /// parses a function or proc
-    fn ParseFunction(&mut self) -> Result<Layer, String> {
+    pub fn ParseFunction(&mut self) -> Result<Layer, String> {
         self.Advance(); // consume keyword
 
         let Name = match self.Advance().map(|t| &t.Kind) {
@@ -177,7 +159,7 @@ if !starts_with_type {
     }
 
     /// identifies what kind of logic statement we have
-    fn ParseStatement(&mut self) -> Result<Layer, String> {
+    pub fn ParseStatement(&mut self) -> Result<Layer, String> {
         let Tok = self.Peek().map(|t| &t.Kind);
         match Tok {
             Some(TokenKind::Panic) => {
@@ -190,7 +172,7 @@ if !starts_with_type {
                 self.Match(TokenKind::Semicolon);
                 Ok(LayerBuilder::New(LayerKind::Unreachable, SourceLocation::Builtin()).Build())
             }
-            Some(TokenKind::Var) => self.ParseVariableBinding(),
+            Some(TokenKind::Var) | Some(TokenKind::Let) => self.ParseVariableBinding(),
             Some(TokenKind::Havoc) => {
                 self.Advance();
                 let Expr = self.ParseExpression()?;
@@ -224,7 +206,7 @@ if !starts_with_type {
     }
 
     /// parses branching logic
-    fn ParseIf(&mut self) -> Result<Layer, String> {
+    pub fn ParseIf(&mut self) -> Result<Layer, String> {
         self.Advance(); // 'if'
         self.Consume(TokenKind::OpenParen, "Expected '('")?;
         let Condition = self.ParseExpression()?;
@@ -239,7 +221,7 @@ if !starts_with_type {
     }
 
     /// parses loop logic
-    fn ParseWhile(&mut self) -> Result<Layer, String> {
+    pub fn ParseWhile(&mut self) -> Result<Layer, String> {
         self.Advance(); // 'while'
         self.Consume(TokenKind::OpenParen, "Expected '('")?;
         let Condition = self.ParseExpression()?;
@@ -249,7 +231,7 @@ if !starts_with_type {
     }
 
     /// parses interrupt 'syscall' blocks
-    fn ParseInterrupt(&mut self) -> Result<Layer, String> {
+    pub fn ParseInterrupt(&mut self) -> Result<Layer, String> {
         self.Advance(); // consume 'interrupt'
         let Syscall = match self.Advance().map(|t| &t.Kind) {
             Some(TokenKind::StringLiteral(s)) | Some(TokenKind::Ident(s)) => s.clone(),
@@ -272,10 +254,9 @@ if !starts_with_type {
     }
 
     /// parses variable bindings with optional hooks
-    fn ParseVariableBinding(&mut self) -> Result<Layer, String> {
-        self.Advance(); // consume 'var' or 'let'
-        let mut is_mutable = false;
-        if self.Match(TokenKind::Mut) { is_mutable = true; }
+    pub fn ParseVariableBinding(&mut self) -> Result<Layer, String> {
+        let is_mutable = matches!(self.Advance().map(|t| &t.Kind), Some(TokenKind::Var));
+
         let (Name, TypeAnnotation) = self.ParseNameAndType("variable")?;
 
         let mut InitialValue = None;
@@ -315,12 +296,12 @@ if !starts_with_type {
     }
 
     /// entry point for expressions
-    fn ParseExpression(&mut self) -> Result<Expression, String> {
+    pub fn ParseExpression(&mut self) -> Result<Expression, String> {
         self.ParseBinary(0)
     }
 
     /// handles operator precedence for math and logic
-    fn ParseBinary(&mut self, Precedence: u8) -> Result<Expression, String> {
+    pub fn ParseBinary(&mut self, Precedence: u8) -> Result<Expression, String> {
         let mut Expr = self.ParsePrimary()?;
 
         while let Some(tok) = self.Peek().map(|t| &t.Kind) {
@@ -355,7 +336,7 @@ if !starts_with_type {
     }
 
     /// the order of operations table
-    fn TokenPrecedence(&self, Tok: &TokenKind) -> u8 {
+    pub fn TokenPrecedence(&self, Tok: &TokenKind) -> u8 {
         match Tok {
             TokenKind::Equal => 1,
             TokenKind::Less | TokenKind::Greater | TokenKind::LessEqual | TokenKind::GreaterEqual => 2,
@@ -367,7 +348,7 @@ if !starts_with_type {
     }
 
     /// parses atoms like numbers, strings, and idents
-    fn ParsePrimary(&mut self) -> Result<Expression, String> {
+    pub fn ParsePrimary(&mut self) -> Result<Expression, String> {
         let Tok = self.Peek().cloned();
         match Tok.as_ref().map(|t| &t.Kind) {
             Some(TokenKind::IntLiteral(val)) => { let v = *val; self.Advance(); Ok(Expression::LiteralInt(v)) }
@@ -427,7 +408,7 @@ if !starts_with_type {
     }
 
     /// parses type names and pointer levels
-    fn ParseType(&mut self) -> Result<Type, String> {
+    pub fn ParseType(&mut self) -> Result<Type, String> {
         let mut BaseType = match self.Peek().map(|t| &t.Kind) {
             Some(TokenKind::Star) => {
                 self.Advance();
@@ -471,7 +452,7 @@ if !starts_with_type {
     }
 
     /// pull the next token from the list
-    fn Advance(&mut self) -> Option<&Token> {
+    pub fn Advance(&mut self) -> Option<&Token> {
         if !self.IsAtEnd() {
             self.Position += 1;
         }
@@ -479,12 +460,12 @@ if !starts_with_type {
     }
 
     /// just check without consuming
-    fn Check(&self, Target: TokenKind) -> bool {
+    pub fn Check(&self, Target: TokenKind) -> bool {
         self.Peek().map(|t| &t.Kind) == Some(&Target)
     }
 
     /// consume if it matches
-    fn Match(&mut self, Target: TokenKind) -> bool {
+    pub fn Match(&mut self, Target: TokenKind) -> bool {
         if self.Check(Target) {
             self.Advance();
             true
@@ -494,17 +475,17 @@ if !starts_with_type {
     }
 
     /// checked if we're done
-    fn IsAtEnd(&self) -> bool {
+    pub fn IsAtEnd(&self) -> bool {
         self.Position >= self.Tokens.len()
     }
 
     /// enforce a specific token or error out
-    fn Consume(&mut self, Target: TokenKind, Message: &str) -> Result<(), String> {
+    pub fn Consume(&mut self, Target: TokenKind, Message: &str) -> Result<(), String> {
         if self.Check(Target) {
             self.Advance();
             Ok(())
         } else {
-            Err(format!("{}. Found {:?}, at line {}", Message, self.Peek(),self.Tokens[self.Position].Line))
+            Err(format!("{}. Found {:?}", Message, self.Peek()))
         }
     }
 }

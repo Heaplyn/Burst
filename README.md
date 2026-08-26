@@ -25,6 +25,7 @@ graph TD
 
 - **Everything is a Layer**: Unified structure for functions, blocks, and variables.
 - **Variable Hooks**: Integrated `on_change` and `on_read` behaviors.
+- **Smart Mutability**: `var` is mutable by default, `let` is immutable.
 - **Refinement Types**: Zero-overhead safety using SMT-based formal verification.
 - **PascalCase Rust**: Standardized coding style across the compiler implementation.
 
