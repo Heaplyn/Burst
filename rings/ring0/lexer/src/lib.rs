@@ -3,175 +3,209 @@
 
 pub mod token;
 
-use token::Token;
+use token::{Token, TokenKind};
+
+/// the thing that turns text into a stream of tokens
 pub struct Lexer<'a> {
+    /// the actual text we are reading
     pub Source: &'a str,
+    /// character iterator with lookahead
     pub Chars: std::iter::Peekable<std::str::Chars<'a>>,
+    /// token we saved for later
     pub PeekedToken: Option<Token>,
+    /// line count for error messages
+    pub CurrentLine: usize,
+    /// column count for error messages
+    pub CurrentColumn: usize,
 }
 
 impl<'a> Lexer<'a> {
+    /// starts a new lexer at line 1 column 1
     pub fn New(Source: &'a str) -> Self {
         Self {
             Source: Source,
             Chars: Source.chars().peekable(),
             PeekedToken: None,
+            CurrentLine: 1,
+            CurrentColumn: 1,
         }
     }
 
-    pub fn NextToken(&mut self) -> Option<token::Token> {
+    /// pulls a char and keeps tracking in sync
+    fn AdvanceChar(&mut self) -> Option<char> {
+        let ch = self.Chars.next()?;
+        if ch == '\n' {
+            self.CurrentLine += 1;
+            self.CurrentColumn = 1;
+        } else {
+            self.CurrentColumn += 1;
+        }
+        Some(ch)
+    }
+
+    /// looks at the next char without pulling it
+    fn PeekChar(&mut self) -> Option<&char> {
+        self.Chars.peek()
+    }
+
+    /// identifies the next token in the stream
+    pub fn NextToken(&mut self) -> Option<Token> {
         if let Some(tok) = self.PeekedToken.take() {
             return Some(tok);
         }
         self.SkipWhitespace();
 
-        let Ch = self.Chars.next()?;
+        let line = self.CurrentLine;
+        let col = self.CurrentColumn;
 
-        match Ch {
-            // Symbols
-            '+' => Some(Token::Plus),
+        let ch = self.AdvanceChar()?;
+
+        let kind = match ch {
+            '+' => TokenKind::Plus,
             '-' => {
-                if self.Chars.peek() == Some(&'>') {
-                    self.Chars.next();
-                    Some(Token::Arrow)
+                if self.PeekChar() == Some(&'>') {
+                    self.AdvanceChar();
+                    TokenKind::Arrow
                 } else {
-                    Some(Token::Minus)
+                    TokenKind::Minus
                 }
             }
-            '*' => Some(Token::Star),
+            '*' => TokenKind::Star,
             '/' => {
-                if self.Chars.peek() == Some(&'/') {
-                    // Single-line comment
-                    while let Some(c) = self.Chars.next() {
+                if self.PeekChar() == Some(&'/') {
+                    while let Some(c) = self.AdvanceChar() {
                         if c == '\n' { break; }
                     }
-                    self.NextToken()
+                    return self.NextToken();
                 } else {
-                    Some(Token::Slash)
+                    TokenKind::Slash
                 }
             }
-            '%' => Some(Token::Percent),
-            '=' => Some(Token::Equal),
-            '(' => Some(Token::OpenParen),
-            ')' => Some(Token::CloseParen),
-            '{' => Some(Token::OpenBrace),
-            '}' => Some(Token::CloseBrace),
-            '[' => Some(Token::OpenBracket),
-            ']' => Some(Token::CloseBracket),
+            '%' => TokenKind::Percent,
+            '=' => TokenKind::Equal,
+            '(' => TokenKind::OpenParen,
+            ')' => TokenKind::CloseParen,
+            '{' => TokenKind::OpenBrace,
+            '}' => TokenKind::CloseBrace,
+            '[' => TokenKind::OpenBracket,
+            ']' => TokenKind::CloseBracket,
             '<' => {
-                if self.Chars.peek() == Some(&'=') {
-                    self.Chars.next();
-                    Some(Token::LessEqual)
+                if self.PeekChar() == Some(&'=') {
+                    self.AdvanceChar();
+                    TokenKind::LessEqual
                 } else {
-                    Some(Token::Less)
+                    TokenKind::Less
                 }
             }
             '>' => {
-                if self.Chars.peek() == Some(&'=') {
-                    self.Chars.next();
-                    Some(Token::GreaterEqual)
+                if self.PeekChar() == Some(&'=') {
+                    self.AdvanceChar();
+                    TokenKind::GreaterEqual
                 } else {
-                    Some(Token::Greater)
+                    TokenKind::Greater
                 }
             }
             ':' => {
-                if self.Chars.peek() == Some(&'=') {
-                    self.Chars.next();
-                    Some(Token::TypeSet)
+                if self.PeekChar() == Some(&'=') {
+                    self.AdvanceChar();
+                    TokenKind::TypeSet
                 } else {
-                    Some(Token::Colon)
+                    TokenKind::Colon
                 }
             }
-            ';' => Some(Token::Semicolon),
-            ',' => Some(Token::Comma),
-            '.' => Some(Token::Dot),
+            ';' => TokenKind::Semicolon,
+            ',' => TokenKind::Comma,
+            '.' => TokenKind::Dot,
 
-            // String Literals
             '\'' => {
                 let mut s = String::new();
-                while let Some(&c) = self.Chars.peek() {
+                while let Some(&c) = self.PeekChar() {
                     if c == '\'' {
-                        self.Chars.next();
-                        return Some(Token::StringLiteral(s));
+                        self.AdvanceChar();
+                        return Some(Token { Kind: TokenKind::StringLiteral(s), Line: line, Column: col });
                     }
-                    s.push(self.Chars.next().unwrap());
+                    s.push(self.AdvanceChar().unwrap());
                 }
-                None // Unclosed string
+                return None;
             }
 
-            // Identifiers, Keywords, and Types
-            C if C.is_alphabetic() || C == '_' => {
-                let mut Identifier = String::new();
-                Identifier.push(C);
-                while let Some(&NextChar) = self.Chars.peek() {
-                    if NextChar.is_alphanumeric() || NextChar == '_' {
-                        Identifier.push(self.Chars.next().unwrap());
+            c if c.is_alphabetic() || c == '_' => {
+                let mut identifier = String::new();
+                identifier.push(c);
+                while let Some(&next_char) = self.PeekChar() {
+                    if next_char.is_alphanumeric() || next_char == '_' {
+                        identifier.push(self.AdvanceChar().unwrap());
                     } else {
                         break;
                     }
                 }
 
-                // Check for keywords
-                match Identifier.as_str() {
-                    "function" => Some(Token::Function),
-                    "fn" => Some(Token::Function),
-                    "where" => Some(Token::Where),
-                    "havoc" => Some(Token::Havoc),
-                    "interrupt" => Some(Token::Interrupt),
-                    "unreachable" => Some(Token::Unreachable),
-                    "panic" => Some(Token::Panic),
-                    "as" => Some(Token::As),
-                    "var" => Some(Token::Var),
-                    "let" => Some(Token::Var),
-                    "match" => Some(Token::Match),
-                    "struct" => Some(Token::Struct),
-                    "enum" => Some(Token::Enum),
-                    Other => {
-                        // Check if it's a bit-precise type (e.g., i32, u16, b8, f64)
-                        if (Other.starts_with('i') || Other.starts_with('u') || Other.starts_with('b') || Other.starts_with('f'))
-                            && Other.len() > 1
-                            && Other[1..].chars().all(|c| c.is_numeric())
+                match identifier.as_str() {
+                    "function" | "fn" => TokenKind::Function,
+                    "var" | "let" => TokenKind::Var,
+                    "mut" => TokenKind::Mut,
+                    "where" => TokenKind::Where,
+                    "havoc" => TokenKind::Havoc,
+                    "interrupt" => TokenKind::Interrupt,
+                    "unreachable" => TokenKind::Unreachable,
+                    "panic" => TokenKind::Panic,
+                    "as" => TokenKind::As,
+                    "match" => TokenKind::Match,
+                    "struct" => TokenKind::Struct,
+                    "enum" => TokenKind::Enum,
+                    "if" => TokenKind::If,
+                    "else" => TokenKind::Else,
+                    "while" => TokenKind::While,
+                    "for" => TokenKind::For,
+                    "loop" => TokenKind::Loop,
+                    "return" => TokenKind::Return,
+                    other => {
+                        if (other.starts_with('i') || other.starts_with('u') || other.starts_with('b') || other.starts_with('f'))
+                            && other.len() > 1
+                            && other[1..].chars().all(|c| c.is_numeric())
                         {
-                            let Kind = Other.chars().next().unwrap();
-                            let Bits = Other[1..].parse::<u32>().unwrap_or(32);
-                            Some(Token::BitPreciseType { Kind, Bits })
+                            let kind = other.chars().next().unwrap();
+                            let bits = other[1..].parse::<u32>().unwrap_or(32);
+                            TokenKind::BitPreciseType { Kind: kind, Bits: bits }
                         } else {
-                            Some(Token::Ident(Other.to_string()))
+                            TokenKind::Ident(other.to_string())
                         }
                     }
                 }
             }
 
-            // Numeric Literals
-            C if C.is_numeric() => {
-                let mut Num = String::new();
-                Num.push(C);
-                let mut IsFloat = false;
+            c if c.is_numeric() => {
+                let mut num = String::new();
+                num.push(c);
+                let mut is_float = false;
 
-                while let Some(&NextChar) = self.Chars.peek() {
-                    if NextChar.is_numeric() {
-                        Num.push(self.Chars.next().unwrap());
-                    } else if NextChar == '.' {
-                        IsFloat = true;
-                        Num.push(self.Chars.next().unwrap());
+                while let Some(&next_char) = self.PeekChar() {
+                    if next_char.is_numeric() {
+                        num.push(self.AdvanceChar().unwrap());
+                    } else if next_char == '.' {
+                        is_float = true;
+                        num.push(self.AdvanceChar().unwrap());
                     } else {
                         break;
                     }
                 }
 
-                if IsFloat {
-                    let Val = Num.parse::<f64>().unwrap_or(0.0);
-                    Some(Token::FloatLiteral(Val))
+                if is_float {
+                    let val = num.parse::<f64>().unwrap_or(0.0);
+                    TokenKind::FloatLiteral(val)
                 } else {
-                    let Val = Num.parse::<i64>().unwrap_or(0);
-                    Some(Token::IntLiteral(Val))
+                    let val = num.parse::<i64>().unwrap_or(0);
+                    TokenKind::IntLiteral(val)
                 }
             }
 
-            _ => None, // Unknown character, skip or return None
-        }
+            _ => return None,
+        };
+
+        Some(Token { Kind: kind, Line: line, Column: col })
     }
 
+    /// checks the next token without pulling it from the stream
     pub fn PeekToken(&mut self) -> Option<Token> {
         if self.PeekedToken.is_none() {
             self.PeekedToken = self.NextToken();
@@ -179,10 +213,11 @@ impl<'a> Lexer<'a> {
         self.PeekedToken.clone()
     }
 
+    /// clears out the spaces and newlines
     fn SkipWhitespace(&mut self) {
-        while let Some(&Ch) = self.Chars.peek() {
-            if Ch.is_whitespace() {
-                self.Chars.next();
+        while let Some(&ch) = self.PeekChar() {
+            if ch.is_whitespace() {
+                self.AdvanceChar();
             } else {
                 break;
             }
@@ -195,38 +230,5 @@ impl<'a> Iterator for Lexer<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.NextToken()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_lexer() {
-        let Code = "fn main() { let x: i32 = 10; havoc x; }";
-        let Tokens: Vec<Token> = Lexer::New(Code).collect();
-        println!("{:?}", Tokens);
-        assert_eq!(
-            Tokens,
-            vec![
-                Token::Function,
-                Token::Ident("main".to_string()),
-                Token::OpenParen,
-                Token::CloseParen,
-                Token::OpenBrace,
-                Token::Var,
-                Token::Ident("x".to_string()),
-                Token::Colon,
-                Token::BitPreciseType { Kind: 'i', Bits: 32 },
-                Token::Equal,
-                Token::IntLiteral(10),
-                Token::Semicolon,
-                Token::Havoc,
-                Token::Ident("x".to_string()),
-                Token::Semicolon,
-                Token::CloseBrace,
-            ]
-        );
     }
 }

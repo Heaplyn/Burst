@@ -1,0 +1,15 @@
+// Demonstrates the "Everything is a Layer" scoping model.
+fn main() {
+    var x: i32 = 10;
+    output_trace('OUTER', x as b8);
+
+    {
+        // New layer (lexical block)
+        // Shadows the outer 'x' with a different type.
+        var x: f64 = 3.14;
+        output_trace('INNER', x as b8);
+    }
+
+    // Outer 'x' is back in scope here.
+    output_trace('OUTER', x as b8);
+}

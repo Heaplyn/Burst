@@ -1,93 +1,115 @@
 use std::collections::HashMap;
+use crate::{LayerKind, LayerId};
 
-// ============================================
-// Core Primitive Types
-// ============================================
-
+/// the actual types for burst rn
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
-    BitPrecise(char, u32),  // e.g., i32, u16, b8, f64
-    Named(String),          // User-defined types
+    /// bit precise stuff like i32 or b8
+    BitPrecise(char, u32),
+    /// names for types we made ourselves
+    Named(String),
+    /// pointers for bare metal stuff
     Pointer(Box<Type>),
+    /// arrays for holding a bunch of things
     Array(Box<Type>, usize),
+    /// refinements for smt checks like x < 10
     Where(Box<Type>, Box<Expression>),
+    /// unit type for when there is nothing
     Unit,
 }
 
+/// everything we can compute or do math with
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
+    /// just a variable name
     Variable(String),
+    /// a whole number
     LiteralInt(i64),
+    /// a number with a decimal
     LiteralFloat(f64),
+    /// true or false bits
     LiteralBool(bool),
+    /// text inside quotes
     LiteralString(String),
+    /// bit precise type used as a value
     TypeLiteral { Kind: char, Bits: u32 },
+    /// two things joined by an operator like + or <
     BinaryOp {
         Op: String,
         Lhs: Box<Expression>,
         Rhs: Box<Expression>,
     },
+    /// one thing with an operator like *ptr
     UnaryOp {
         Op: String,
         Target: Box<Expression>,
     },
+    /// calling a function with args
     FunctionCall {
         Name: String,
         Args: Vec<Expression>,
     },
+    /// reaching into a struct like cpu.rax
+    MemberAccess {
+        Target: Box<Expression>,
+        Member: String,
+    },
+    /// bit precise type specifically for the lexer
     BitPreciseType {
         Kind: char,
         Bits: u32,
     }
 }
 
-
-// ============================================
-// Structure Components
-// ============================================
-
+/// function params with names and types
 #[derive(Debug, Clone, PartialEq)]
 pub struct Param {
     pub Name: String,
     pub Type_: Type,
 }
 
+/// struct fields with names and types
 #[derive(Debug, Clone, PartialEq)]
 pub struct StructField {
     pub Name: String,
     pub Type_: Type,
 }
 
+/// enum variants with optional payloads
 #[derive(Debug, Clone, PartialEq)]
 pub struct EnumVariant {
     pub Name: String,
     pub Payload: Option<Type>,
 }
 
+/// generic params for type functions
 #[derive(Debug, Clone, PartialEq)]
 pub struct GenericParam {
     pub Name: String,
     pub Bound: Option<Type>,
 }
 
-// ============================================
-// Patterns & Hooks
-// ============================================
-
+/// pattern matching variants
 #[derive(Debug, Clone, PartialEq)]
 pub enum Pattern {
+    /// matches anything (_)
     Wildcard,
+    /// matches a specific value
     Literal(Expression),
+    /// matches and binds to a name
     Variable(String),
+    /// matches an enum variant
     Variant(String, Option<Box<Pattern>>),
 }
 
+/// logic that runs when variables change
 #[derive(Debug, Clone, PartialEq)]
 pub struct VariableHook {
     pub Kind: HookKind,
-    pub Callback: String, // Function name or closure ID
+    pub Body: Vec<LayerKind>,
 }
 
+/// the different kinds of variable behaviors
 #[derive(Debug, Clone, PartialEq)]
 pub enum HookKind {
     OnChange,
@@ -97,25 +119,23 @@ pub enum HookKind {
     OnError,
 }
 
-// ============================================
-// Type Storage & Environment
-// ============================================
-
+/// where we store types for each layer
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct TypeStorage {
     pub DefinedTypes: HashMap<String, TypeDefinition>,
     pub TypeAliases: HashMap<String, Type>,
 }
 
+/// full definition of a user type
 #[derive(Debug, Clone, PartialEq)]
 pub struct TypeDefinition {
     pub Name: String,
     pub Kind: TypeKind,
     pub SourceLocation: SourceLocation,
     pub Docs: Option<String>,
-    pub Attributes: HashMap<String, MetadataValue>,
 }
 
+/// the physical layout of a type
 #[derive(Debug, Clone, PartialEq)]
 pub enum TypeKind {
     Struct(Vec<StructField>),
@@ -124,10 +144,7 @@ pub enum TypeKind {
     Generic(Vec<GenericParam>),
 }
 
-// ============================================
-// Metadata & Observability
-// ============================================
-
+/// tracking where code is in the files
 #[derive(Debug, Clone, PartialEq)]
 pub struct SourceLocation {
     pub File: String,
@@ -136,6 +153,7 @@ pub struct SourceLocation {
 }
 
 impl SourceLocation {
+    /// for code that the compiler just knows
     pub fn Builtin() -> Self {
         Self {
             File: "<builtin>".to_string(),
@@ -145,6 +163,7 @@ impl SourceLocation {
     }
 }
 
+/// values for metadata like doc comments
 #[derive(Debug, Clone, PartialEq)]
 pub enum MetadataValue {
     String(String),
@@ -156,6 +175,7 @@ pub enum MetadataValue {
     Null,
 }
 
+/// compiler directives like #[inline]
 #[derive(Debug, Clone, PartialEq)]
 pub enum Directive {
     Inline,
@@ -166,12 +186,9 @@ pub enum Directive {
     Hot,
     Unsafe,
     Extern,
-    HavocControl {
-        CacheInvalidate: Vec<String>,
-        CacheKeep: Vec<String>,
-    },
 }
 
+/// hints for the optimizer to go fast
 #[derive(Debug, Clone, PartialEq)]
 pub struct OptimizationHints {
     pub AggressiveLoopFolding: bool,
@@ -180,6 +197,7 @@ pub struct OptimizationHints {
     pub InlineThreshold: Option<usize>,
 }
 
+/// how much the compiler should care about traces
 #[derive(Debug, Clone, PartialEq)]
 pub enum ObservabilityMode {
     Strict,
@@ -187,6 +205,7 @@ pub enum ObservabilityMode {
     Aggressive,
 }
 
+/// how many registers the compiler can use
 #[derive(Debug, Clone, PartialEq)]
 pub enum RegisterPressureMode {
     Low,
@@ -194,6 +213,7 @@ pub enum RegisterPressureMode {
     Auto,
 }
 
+/// flags for the observability boundary
 #[derive(Debug, Clone, PartialEq)]
 pub struct ObservabilityFlags {
     pub ObservableValues: Vec<ObservableValue>,
@@ -202,6 +222,7 @@ pub struct ObservabilityFlags {
     pub ObservableToTrace: bool,
 }
 
+/// values that we can actually see outside the program
 #[derive(Debug, Clone, PartialEq)]
 pub enum ObservableValue {
     Register(String),
@@ -211,22 +232,27 @@ pub enum ObservableValue {
     Variable(String),
 }
 
-// ============================================
-// Constraints & Trace
-// ============================================
-
+/// logical rules for smt and pomset
 #[derive(Debug, Clone, PartialEq)]
 pub enum Constraint {
+    /// refined types like x > 0
     RefinedType {
         Variable: String,
         Condition: String,
     },
+    /// making sure things are safe
     Safety {
         Condition: String,
         ErrorMessage: String,
     },
+    /// partial ordering for parallel tasks
+    POMSET {
+        Before: LayerId,
+        After: LayerId,
+    },
 }
 
+/// info for the layertrace runtime
 #[derive(Debug, Clone, PartialEq)]
 pub struct TraceInfo {
     pub TraceId: String,
@@ -235,6 +261,7 @@ pub struct TraceInfo {
     pub TypeEnv: TypeStorage,
 }
 
+/// what the trace is actually inside of
 #[derive(Debug, Clone, PartialEq)]
 pub enum TraceContext {
     Root,

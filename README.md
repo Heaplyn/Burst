@@ -1,47 +1,40 @@
 # Burst: The Principle of Most Speed
 
-**Burst** is an experimental, bare-metal systems programming language designed for hyper-aggressive optimization. It models programs as a **Partially Ordered Multiset (POMSET) of traces** subject to logical constraints.
+Burst is an experimental, bare-metal systems programming language designed for hyper-aggressive optimization and zero-overhead safety.
 
-## 🏗️ Project Architecture (The Ring System)
+## 🏗️ Ring Architecture
 
-The compiler is structured into a multi-crate workspace, following a unidirectional "Ring" dependency model:
+The compiler is structured into unidirectional layers (Rings) to maintain strict separation of concerns:
 
-- **Ring 0: Foundation**
-  - [`ast`](./rings/ring0/ast): The core "Everything is a Layer" AST. Divided into `types.rs` (atoms) and `lib.rs` (layers).
-  - [`lexer`](./rings/ring0/lexer): The tokenizer, supporting bit-precise types (`i32`, `b8`, etc.) and the new keyword set.
-- **Ring 1: Parsing**
-  - `parser`: (In Development) Transforms tokens into recursive `Layer` trees.
-- **Ring 2: Elaboration**
-  - [`elaboration`](./rings/ring2/elaboration): Analyzes layers to extract SMT constraints and semantic metadata.
-- **Ring 3: Interface**
-  - [`command_parser`](./rings/ring3/command_parser): Handles CLI arguments and workspace configuration.
-- **Driver**
-  - [`burst`](./burst): The main entry point that orchestrates the compilation pipeline.
+| Ring | Module | Status | Description |
+| :--- | :--- | :--- | :--- |
+| **Ring 0** | `ast`, `lexer` | ✅ Complete | Foundation, Syntax Trees, and Tokenization. |
+| **Ring 1** | `parser` | ✅ Complete | Transforming Token streams into Recursive `Layer` trees. |
+| **Ring 2** | `elaboration` | 🚧 In Progress | SMT Constraint Extraction and POMSET analysis. |
+| **Ring 3** | `command_parser`| ✅ Complete | CLI arguments and workspace management. |
 
-## 💎 Code Style: PascalCase
-
-Burst's Rust implementation uses **PascalCase** for all identifiers (Functions, Variables, Fields, Structs, Enums) to distinguish the compiler logic from standard Rust library code. Standard Rust warnings are suppressed via `#![allow(non_snake_case)]`.
-
-## 🚀 Current Status
-
-- [x] **PascalCase Refactor**: Complete across all crates.
-- [x] **Ring 0 (AST)**: Reorganized into a clean `Layer`-based architecture.
-- [x] **Lexer**: Fully operational with support for `var`, `function`, `match`, and `where`.
-- [x] **Elaboration**: Basic `Layer`-aware constraint extraction is functional.
-- [ ] **Parser**: Under reconstruction to support recursive `Layer` building.
-
-## 🛠️ Building and Testing
-
-Ensure you have the latest Rust toolchain installed.
-
-```powershell
-# Check the entire workspace
-cargo check
-
-# Run all tests
-cargo test
+```mermaid
+graph TD
+    A[Ring 0: AST & Lexer] --> B[Ring 1: Parser]
+    B --> C[Ring 2: Elaboration]
+    C --> D[Ring 3: Command Parser]
+    D --> E[Driver: Burst CLI]
 ```
 
-## 📖 Documentation
+## 🚀 Key Features
 
-Comprehensive language specifications and design notes are maintained in the [Obsidian Vault](file:///C:/Users/Kyle/Documents/Burst%20Language).
+- **Everything is a Layer**: Unified structure for functions, blocks, and variables.
+- **Variable Hooks**: Integrated `on_change` and `on_read` behaviors.
+- **Refinement Types**: Zero-overhead safety using SMT-based formal verification.
+- **PascalCase Rust**: Standardized coding style across the compiler implementation.
+
+## 🛠️ Build and Run
+
+```powershell
+# Check workspace
+cargo check
+
+# Run compiler on examples
+cargo run -- compile examples/refinement.burst
+cargo run -- compile examples/variable_hooks.burst
+```

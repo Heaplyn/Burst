@@ -6,6 +6,7 @@ use parser::Parser as ParserStruct;
 use elaboration::ElaborationContext;
 use command_parser::{Cli, Commands};
 
+/// runs the lexer, parser, and elaborator in order
 fn RunPipeline(SourceCode: &str, Verbose: bool) {
     // 1. Run the Lexer
     let Tokens: Vec<_> = LexerStruct::New(SourceCode).collect();
@@ -17,8 +18,9 @@ fn RunPipeline(SourceCode: &str, Verbose: bool) {
     let mut P = ParserStruct::New(Tokens);
     match P.Parse() {
         Ok(Ast) => {
+            println!("AST constructed with {} top-level items.", Ast.Children.len());
             if Verbose {
-                println!("AST: {:#?}", Ast);
+                println!("AST Detail: {:#?}", Ast);
             }
 
             // 3. Run Elaboration / Constraint extraction
@@ -27,7 +29,6 @@ fn RunPipeline(SourceCode: &str, Verbose: bool) {
                 eprintln!("Elaboration Error: {}", E);
                 return;
             }
-            println!("Elaboration constraints: {:?}", ElabCtx.Constraints);
             println!("Verification & Compilation Successful!");
         }
         Err(E) => {
@@ -36,6 +37,7 @@ fn RunPipeline(SourceCode: &str, Verbose: bool) {
     }
 }
 
+/// entry point for the executable
 fn main() {
     // Parse arguments using clap
     let Args = Cli::ParseArgs();
