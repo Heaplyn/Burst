@@ -1,17 +1,17 @@
 # Burst: The Principle of Most Speed
 
-Burst is an experimental, bare-metal systems programming language designed for hyper-aggressive optimization and zero-overhead safety.
+burst is a bare-metal systems language built for one thing: speed. we don't just compile code; we model it as a graph of traces and use math to delete every check the computer doesn't absolutely need.
 
-## 🏗️ Ring Architecture
+## 🏗️ ring architecture
 
-The compiler is structured into unidirectional layers (Rings) to maintain strict separation of concerns:
+the compiler is split into unidirectional rings. lower rings are the foundation, higher rings do the heavy lifting.
 
-| Ring | Module | Status | Description |
+| ring | module | status | description |
 | :--- | :--- | :--- | :--- |
-| **Ring 0** | `ast`, `lexer` | ✅ Complete | Foundation, Syntax Trees, and Tokenization. |
-| **Ring 1** | `parser` | ✅ Complete | Transforming Token streams into Recursive `Layer` trees. |
-| **Ring 2** | `elaboration` | 🚧 In Progress | SMT Constraint Extraction and POMSET analysis. |
-| **Ring 3** | `command_parser`| ✅ Complete | CLI arguments and workspace management. |
+| **ring 0** | `ast`, `lexer` | ✅ complete | foundation, tokens, and the "everything is a layer" model. |
+| **ring 1** | `parser` | ✅ complete | turns raw tokens into recursive layer trees. |
+| **ring 2** | `elaboration` | 🚧 in progress | smt-lib translation and pomset dependency logic. |
+| **ring 3** | `command_parser`| ✅ complete | handling the cli so you can actually run it. |
 
 ```mermaid
 graph TD
@@ -21,21 +21,51 @@ graph TD
     D --> E[Driver: Burst CLI]
 ```
 
-## 🚀 Key Features
+---
 
-- **Everything is a Layer**: Unified structure for functions, blocks, and variables.
-- **Variable Hooks**: Integrated `on_change` and `on_read` behaviors.
-- **Smart Mutability**: `var` is mutable by default, `let` is immutable.
-- **Refinement Types**: Zero-overhead safety using SMT-based formal verification.
-- **PascalCase Rust**: Standardized coding style across the compiler implementation.
+## 🚀 how it works
 
-## 🛠️ Build and Run
+### everything is a layer
+in burst, we don't have "statements" or "expressions" in a flat list. everything—from the whole program down to a single variable hook—is a **layer**. 
+- layers can have children (nested code).
+- layers track their own metadata (docs, line numbers).
+- layers hold **logical constraints** that tell the compiler how they can be optimized.
+
+### smart mutability
+we skipped the `mut` keyword mess. 
+- **`var`**: always mutable. you can change it whenever.
+- **`let`**: strictly immutable. set it once and it's locked.
+
+### zero-cost safety (smt & refinements)
+we use refinement types to prove code is safe *before* it runs. if you have a variable `x: u32 where x < 10`, the elaborator translates that into **smt-lib v2** logic.
+- the compiler asks an smt solver (like z3): "is it mathematically possible for this code to crash?"
+- if the answer is "no," the compiler **erases the proof** and generates raw, naked machine code with zero runtime checks.
+
+### variable hooks
+you can attach reactive logic to variables.
+- `on_change`: runs when the value is updated (perfect for clamping).
+- `on_read`: runs when the value is accessed (perfect for lazy loading or tracing).
+
+---
+
+## 💎 code style: pascalcase
+
+the compiler source (rust) uses **pascalcase** for everything:
+- `fn RunPipeline`
+- `let SourceCode`
+- `struct ElaborationContext`
+
+this keeps our logic separate from standard rust libraries and makes the ring boundaries clear.
+
+## 🛠️ build and run
 
 ```powershell
-# Check workspace
+# check if the workspace is healthy
 cargo check
 
-# Run compiler on examples
+# run a compile on the examples
 cargo run -- compile examples/refinement.burst
 cargo run -- compile examples/variable_hooks.burst
 ```
+
+check the [obsidian vault](file:///C:/Users/Kyle/Documents/Burst%20Language) for the full specs. 🚀
