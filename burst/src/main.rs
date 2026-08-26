@@ -1,66 +1,64 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
-use lexer::lexer as LexerStruct;
-use parser::parser as ParserStruct;
-use elaboration::elaboration_context;
-use command_parser::{cli, commands};
+use lexer::Lexer as LexerStruct;
+use parser::Parser as ParserStruct;
+use elaboration::ElaborationContext;
+use command_parser::{Cli, Commands};
 
-fn run_pipeline(source_code: &str, verbose: bool) {
+fn RunPipeline(SourceCode: &str, Verbose: bool) {
     // 1. Run the Lexer
-    let tokens: Vec<_> = LexerStruct::new(source_code).collect();
-    if verbose {
-        println!("Tokens: {:?}", tokens);
+    let Tokens: Vec<_> = LexerStruct::New(SourceCode).collect();
+    if Verbose {
+        println!("Tokens: {:?}", Tokens);
     }
 
     // 2. Run the Parser
-    let mut p = ParserStruct::new(tokens);
-    match p.parse() {
-        Ok(ast) => {
-            if verbose {
-                println!("AST: {:?}", ast);
+    let mut P = ParserStruct::New(Tokens);
+    match P.Parse() {
+        Ok(Ast) => {
+            if Verbose {
+                println!("AST: {:#?}", Ast);
             }
 
             // 3. Run Elaboration / Constraint extraction
-            let mut elab_ctx = elaboration_context::new();
-            for stmt in &ast {
-                if let Err(e) = elab_ctx.elaborate_statement(stmt) {
-                    eprintln!("Elaboration Error: {}", e);
-                    return;
-                }
+            let mut ElabCtx = ElaborationContext::New();
+            if let Err(E) = ElabCtx.ElaborateLayer(&Ast) {
+                eprintln!("Elaboration Error: {}", E);
+                return;
             }
-            println!("Elaboration constraints: {:?}", elab_ctx.constraints);
+            println!("Elaboration constraints: {:?}", ElabCtx.Constraints);
             println!("Verification & Compilation Successful!");
         }
-        Err(err) => {
-            eprintln!("Parsing Error: {}", err);
+        Err(E) => {
+            eprintln!("Parsing Error: {}", E);
         }
     }
 }
 
 fn main() {
     // Parse arguments using clap
-    let args = cli::parse_args();
+    let Args = Cli::ParseArgs();
 
-    match &args.command {
-        commands::compile { input, opt_level } => {
-            println!("Reading source file: {:?}", input);
-            match std::fs::read_to_string(input) {
-                Ok(source_code) => {
-                    println!("Compiling with optimization level -O{}", opt_level);
-                    run_pipeline(&source_code, args.verbose);
+    match &Args.Command {
+        Commands::Compile { Input, OptLevel } => {
+            println!("Reading source file: {:?}", Input);
+            match std::fs::read_to_string(Input) {
+                Ok(SourceCode) => {
+                    println!("Compiling with optimization level -O{}", OptLevel);
+                    RunPipeline(&SourceCode, Args.Verbose);
                 }
-                Err(err) => {
-                    eprintln!("Error reading file {:?}: {}", input, err);
+                Err(E) => {
+                    eprintln!("Error reading file {:?}: {}", Input, E);
                 }
             }
         }
-        commands::eval { code } => {
-            println!("Evaluating inline code: '{}'", code);
-            run_pipeline(code, args.verbose);
+        Commands::Eval { Code } => {
+            println!("Evaluating inline code: '{}'", Code);
+            RunPipeline(Code, Args.Verbose);
         }
-        commands::test { filter } => {
-            println!("Running tests. Filter: {:?}", filter);
+        Commands::Test { Filter } => {
+            println!("Running tests. Filter: {:?}", Filter);
         }
     }
 }

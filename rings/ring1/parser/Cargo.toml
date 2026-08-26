@@ -1,8 +1,8 @@
 [package]
 name = "parser"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 
 [dependencies]
-lexer = { path = "../../ring0/lexer" }
 ast = { path = "../../ring0/ast" }
+lexer = { path = "../../ring0/lexer" }

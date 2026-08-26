@@ -1,40 +1,56 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
-use ast::statement;
+use ast::{Layer, LayerKind};
 
-pub struct elaboration_context {
-    pub constraints: Vec<String>,
+pub struct ElaborationContext {
+    pub Constraints: Vec<String>,
 }
 
-impl elaboration_context {
-    pub fn new() -> Self {
-        Self { constraints: Vec::new() }
+impl ElaborationContext {
+    pub fn New() -> Self {
+        Self { Constraints: Vec::new() }
     }
 
-    pub fn elaborate_statement(&mut self, stmt: &statement) -> Result<(), String> {
-        match stmt {
-            statement::panic => {
-                self.constraints.push("panic_state".to_string());
-                Ok(())
+    pub fn ElaborateLayer(&mut self, L: &Layer) -> Result<(), String> {
+        // 1. Process local layer kind
+        match &L.Kind {
+            LayerKind::Panic => {
+                self.Constraints.push("panic_state".to_string());
             }
-            statement::unreachable => {
-                self.constraints.push("unreachable_state".to_string());
-                Ok(())
+            LayerKind::Unreachable => {
+                self.Constraints.push("unreachable_state".to_string());
             }
-            _ => Ok(()),
+            LayerKind::Function { Name, .. } => {
+                println!("Elaborating function: {}", Name);
+            }
+            _ => {}
         }
+
+        // 2. Recursively elaborate children
+        for Child in &L.Children {
+            self.ElaborateLayer(Child)?;
+        }
+
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ast::{LayerBuilder, SourceLocation};
 
     #[test]
     fn test_elaboration_basic() {
-        let mut ctx = elaboration_context::new();
-        ctx.elaborate_statement(&statement::panic).unwrap();
-        assert_eq!(ctx.constraints, vec!["panic_state".to_string()]);
+        let mut Ctx = ElaborationContext::New();
+
+        let PanicLayer = LayerBuilder::New(LayerKind::Panic, SourceLocation::Builtin()).Build();
+        Ctx.ElaborateLayer(&PanicLayer).unwrap();
+        assert_eq!(Ctx.Constraints, vec!["panic_state".to_string()]);
+        
+        let UnreachableLayer = LayerBuilder::New(LayerKind::Unreachable, SourceLocation::Builtin()).Build();
+        Ctx.ElaborateLayer(&UnreachableLayer).unwrap();
+        assert_eq!(Ctx.Constraints, vec!["panic_state".to_string(), "unreachable_state".to_string()]);
     }
 }

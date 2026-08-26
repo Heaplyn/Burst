@@ -1,4 +1,4 @@
-fn main() {
+function main() {
     // Prints a hello world trace message to the output buffer
-    output_trace('HELLO_WORLD', 0 as b8);
+    print('HELLO_WORLD', 0 as b8);
 }

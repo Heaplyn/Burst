@@ -1,71 +1,170 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
+pub mod types;
+pub use types::*;
+
+use std::collections::HashMap;
+
+// ============================================
+// Core Layer Structure
+// ============================================
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum statement {
-    panic,
-    unreachable,
-    empty,
-    let_binding {
-        name: String,
-        type_annotation: Option<Type>,
-        value: expression,
+pub struct Layer {
+    pub Id: LayerId,
+    pub Kind: LayerKind,
+    pub Metadata: LayerMetadata,
+    pub Children: Vec<Layer>,
+    pub Constraints: Vec<Constraint>,
+    pub Observability: ObservabilityFlags,
+    pub TypeStorage: TypeStorage,
+    pub TraceInfo: TraceInfo,
+}
+
+#[derive(Debug, Clone, PartialEq, Hash, Eq)]
+pub struct LayerId(pub String);
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum LayerKind {
+    Program,
+    Function {
+        Name: String,
+        Params: Vec<Param>,
+        ReturnType: Option<Type>,
+        IsUnsafe: bool,
+        IsExtern: bool,
     },
-    assignment {
-        target: expression,
-        value: expression,
+    VariableBinding {
+        Name: String,
+        TypeAnnotation: Option<Type>,
+        IsMutable: bool,
+        Hooks: Vec<VariableHook>,
+        InitialValue: Option<Expression>,
     },
-    havoc {
-        target: expression,
+    Assignment {
+        Target: Expression,
+        Value: Expression,
     },
-    function {
-        name: String,
-        params: Vec<Param>,
-        return_type: Option<Type>,
-        body: Vec<statement>,
+    Expression(Expression),
+    Block,
+    Loop {
+        Label: Option<String>,
     },
-    struct_declaration {
-        name: String,
-        fields: Vec<StructField>,
+    Conditional {
+        Condition: Expression,
+        HasElse: bool,
     },
-    block(Vec<statement>),
+    MatchArm {
+        Pattern: Pattern,
+        Guard: Option<Expression>,
+    },
+    Panic,
+    Unreachable,
+    Havoc {
+        Target: Expression,
+    },
+    Interrupt {
+        Syscall: String,
+    },
+    Struct {
+        Name: String,
+        Fields: Vec<StructField>,
+        IsPacked: bool,
+    },
+    Enum {
+        Name: String,
+        Variants: Vec<EnumVariant>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum expression {
-    variable(String),
-    literal_int(i64),
-    literal_float(f64),
-    type_literal { kind: char, bits: u32 },
-    // Add more: binary_op, unary_op, function_call, etc.
+pub struct LayerMetadata {
+    pub SourceLocation: SourceLocation,
+    pub Docs: Option<String>,
+    pub Directives: Vec<Directive>,
+    pub Optimization: OptimizationHints,
+    pub Custom: HashMap<String, MetadataValue>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Param {
-    pub name: String,
-    pub type_: Type,
+// ============================================
+// Layer Builder
+// ============================================
+
+pub struct LayerBuilder {
+    layer: Layer,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct StructField {
-    pub name: String,
-    pub type_: Type,
+impl LayerBuilder {
+    pub fn New(kind: LayerKind, source_location: SourceLocation) -> Self {
+        Self {
+            layer: Layer {
+                Id: LayerId(format!("layer_{}", std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_micros())),
+                Kind: kind,
+                Metadata: LayerMetadata {
+                    SourceLocation: source_location,
+                    Docs: None,
+                    Directives: Vec::new(),
+                    Optimization: OptimizationHints {
+                        AggressiveLoopFolding: false,
+                        TraceObservability: ObservabilityMode::Strict,
+                        RegisterPressure: RegisterPressureMode::Auto,
+                        InlineThreshold: None,
+                    },
+                    Custom: HashMap::new(),
+                },
+                Children: Vec::new(),
+                Constraints: Vec::new(),
+                Observability: ObservabilityFlags {
+                    ObservableValues: Vec::new(),
+                    AffectsOutput: false,
+                    AffectsHardware: false,
+                    ObservableToTrace: true,
+                },
+                TypeStorage: TypeStorage::default(),
+                TraceInfo: TraceInfo {
+                    TraceId: "unknown".to_string(),
+                    Depth: 0,
+                    Context: TraceContext::Root,
+                    TypeEnv: TypeStorage::default(),
+                },
+            },
+        }
+    }
+
+    pub fn WithDoc(mut self, doc: String) -> Self {
+        self.layer.Metadata.Docs = Some(doc);
+        self
+    }
+
+    pub fn WithChild(mut self, child: Layer) -> Self {
+        self.layer.Children.push(child);
+        self
+    }
+
+    pub fn WithChildren(mut self, children: Vec<Layer>) -> Self {
+        self.layer.Children.extend(children);
+        self
+    }
+
+    pub fn Build(self) -> Layer {
+        self.layer
+    }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum Type {
-    bit_precise(char, u32),  // e.g., i32, u16, b8, f64
-    named(String),           // User-defined types
-    // Add more: pointer, array, etc.
-}
+// ============================================
+// Layer Logic
+// ============================================
 
-impl Type {
-    pub fn bit_precise(kind: char, bits: u32) -> Self {
-        Type::bit_precise(kind, bits)
+impl Layer {
+    pub fn AddType(&mut self, type_def: TypeDefinition) {
+        self.TypeStorage.DefinedTypes.insert(type_def.Name.clone(), type_def);
     }
     
-    pub fn named(name: String) -> Self {
-        Type::named(name)
+    pub fn IsRoot(&self) -> bool {
+        matches!(self.Kind, LayerKind::Program)
     }
 }

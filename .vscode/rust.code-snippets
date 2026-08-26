@@ -1,0 +1,152 @@
+{
+    "OpenParen": {
+        "prefix": ["op", "openparen"],
+        "body": "Token::OpenParen",
+        "description": "Open parenthesis token"
+    },
+    "CloseParen": {
+        "prefix": ["cp", "closeparen"],
+        "body": "Token::CloseParen",
+        "description": "Close parenthesis token"
+    },
+    "OpenBrace": {
+        "prefix": ["ob", "openbrace"],
+        "body": "Token::OpenBrace",
+        "description": "Open brace token"
+    },
+    "CloseBrace": {
+        "prefix": ["cb", "closebrace"],
+        "body": "Token::CloseBrace",
+        "description": "Close brace token"
+    },
+    "OpenBracket": {
+        "prefix": ["obr", "openbracket"],
+        "body": "Token::OpenBracket",
+        "description": "Open bracket token"
+    },
+    "CloseBracket": {
+        "prefix": ["cbr", "closebracket"],
+        "body": "Token::CloseBracket",
+        "description": "Close bracket token"
+    },
+    "Semicolon": {
+        "prefix": ["semi", "semicolon"],
+        "body": "Token::Semicolon",
+        "description": "Semicolon token"
+    },
+    "Comma": {
+        "prefix": ["comma"],
+        "body": "Token::Comma",
+        "description": "Comma token"
+    },
+    "Colon": {
+        "prefix": ["colon"],
+        "body": "Token::Colon",
+        "description": "Colon token"
+    },
+    "Arrow": {
+        "prefix": ["arrow"],
+        "body": "Token::Arrow",
+        "description": "Arrow token"
+    },
+    "Function": {
+        "prefix": ["fn", "function"],
+        "body": "Token::Function",
+        "description": "Function keyword"
+    },
+    "Var": {
+        "prefix": ["var"],
+        "body": "Token::Var",
+        "description": "Var keyword"
+    },
+    "Return": {
+        "prefix": ["ret", "return"],
+        "body": "Token::Return",
+        "description": "Return keyword"
+    },
+    "Struct": {
+        "prefix": ["struct"],
+        "body": "Token::Struct",
+        "description": "Struct keyword"
+    },
+    "Enum": {
+        "prefix": ["enum"],
+        "body": "Token::Enum",
+        "description": "Enum keyword"
+    },
+    "Havoc": {
+        "prefix": ["havoc"],
+        "body": "Token::Havoc",
+        "description": "Havoc keyword"
+    },
+    "Panic": {
+        "prefix": ["panic"],
+        "body": "Token::Panic",
+        "description": "Panic keyword"
+    },
+    "Unreachable": {
+        "prefix": ["unreachable"],
+        "body": "Token::Unreachable",
+        "description": "Unreachable keyword"
+    },
+    "Where": {
+        "prefix": ["where"],
+        "body": "Token::Where",
+        "description": "Where keyword"
+    },
+    "Match": {
+        "prefix": ["match"],
+        "body": "Token::Match",
+        "description": "Match keyword"
+    },
+    "Plus": {
+        "prefix": ["plus"],
+        "body": "Token::Plus",
+        "description": "Plus operator"
+    },
+    "Minus": {
+        "prefix": ["minus"],
+        "body": "Token::Minus",
+        "description": "Minus operator"
+    },
+    "Star": {
+        "prefix": ["star"],
+        "body": "Token::Star",
+        "description": "Star operator"
+    },
+    "Slash": {
+        "prefix": ["slash"],
+        "body": "Token::Slash",
+        "description": "Slash operator"
+    },
+    "Equal": {
+        "prefix": ["eq", "equal"],
+        "body": "Token::Equal",
+        "description": "Equal operator"
+    },
+    "Percent": {
+        "prefix": ["percent"],
+        "body": "Token::Percent",
+        "description": "Percent operator"
+    },
+    "TypeSet": {
+        "prefix": ["typeset"],
+        "body": "Token::TypeSet",
+        "description": "Type set operator"
+    },
+    "Ident": {
+        "prefix": ["ident"],
+        "body": "Token::Ident(${1:name}.to_string())",
+        "description": "Identifier token"
+    },
+    "IntLiteral": {
+        "prefix": ["intlit"],
+        "body": "Token::IntLiteral(${1:value})",
+        "description": "Integer literal token"
+    },
+    "FloatLiteral": {
+        "prefix": ["floatlit"],
+        "body": "Token::FloatLiteral(${1:value})",
+        "description": "Float literal token"
+    }
+}

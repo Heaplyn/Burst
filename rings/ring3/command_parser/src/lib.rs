@@ -6,51 +6,51 @@ use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(name = "burst", version = "0.1.0")]
-pub struct cli {
+pub struct Cli {
     #[arg(short, long, global = true)]
-    pub verbose: bool,
+    pub Verbose: bool,
 
     #[arg(short, long, global = true, value_name = "DIR")]
-    pub workspace: Option<PathBuf>,
+    pub Workspace: Option<PathBuf>,
 
     #[command(subcommand)]
-    pub command: commands,
+    pub Command: Commands,
 }
 
 #[derive(Subcommand, Debug, Clone)]
-pub enum commands {
+pub enum Commands {
     // compile file
-    compile {
+    Compile {
         #[arg(required = true, value_name = "FILE")]
-        input: PathBuf,
+        Input: PathBuf,
 
         #[arg(short = 'O', long, default_value_t = 2)]
-        opt_level: u8,
+        OptLevel: u8,
     },
 
     // run inline statement
-    eval {
+    Eval {
         #[arg(required = true)]
-        code: String,
+        Code: String,
     },
     // run tests
-    test {
+    Test {
         #[arg(short, long)]
-        filter: Option<String>,
+        Filter: Option<String>,
     },
 }
 
-impl cli {
-    pub fn parse_args() -> Self {
+impl Cli {
+    pub fn ParseArgs() -> Self {
         Self::parse()
     }
 
     // helper for tests/repl
-    pub fn parse_from_args<I, T>(args: I) -> Result<Self, clap::Error>
+    pub fn ParseFromArgs<I, T>(Args: I) -> Result<Self, clap::Error>
     where
         I: IntoIterator<Item = T>,
         T: Into<std::ffi::OsString> + Clone,
     {
-        Self::try_parse_from(args)
+        Self::try_parse_from(Args)
     }
 }

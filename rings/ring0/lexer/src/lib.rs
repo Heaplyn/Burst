@@ -1,153 +1,170 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum token {
-    // Keywords
-    fn_,
-    where_,
-    havoc,
-    interrupt,
-    unreachable,
-    panic,
-    as_,
-    let_,
-    match_,
-    struct_,
-    enum_,
+pub mod token;
 
-    // Identifiers and Literals
-    ident(String),
-    int_literal(i64),
-    float_literal(f64),
-    bit_precise_type { kind: char, bits: u32 },
-
-    // Operators and Symbols
-    plus,
-    minus,
-    star,
-    slash,
-    percent,
-    equal,
-    arrow,          // ->
-    open_paren,      // (
-    close_paren,     // )
-    open_brace,      // {
-    close_brace,     // }
-    open_bracket,    // [
-    close_bracket,   // ]
-    colon,
-    semicolon,
-    comma,
+use token::Token;
+pub struct Lexer<'a> {
+    pub Source: &'a str,
+    pub Chars: std::iter::Peekable<std::str::Chars<'a>>,
+    pub PeekedToken: Option<Token>,
 }
 
-pub struct lexer<'a> {
-    _source: &'a str,
-    chars: std::iter::Peekable<std::str::Chars<'a>>,
-}
-
-impl<'a> lexer<'a> {
-    pub fn new(source: &'a str) -> Self {
+impl<'a> Lexer<'a> {
+    pub fn New(Source: &'a str) -> Self {
         Self {
-            _source: source,
-            chars: source.chars().peekable(),
+            Source: Source,
+            Chars: Source.chars().peekable(),
+            PeekedToken: None,
         }
     }
 
-    pub fn next_token(&mut self) -> Option<token> {
-        self.skip_whitespace();
+    pub fn NextToken(&mut self) -> Option<token::Token> {
+        if let Some(tok) = self.PeekedToken.take() {
+            return Some(tok);
+        }
+        self.SkipWhitespace();
 
-        let ch = self.chars.next()?;
+        let Ch = self.Chars.next()?;
 
-        match ch {
+        match Ch {
             // Symbols
-            '+' => Some(token::plus),
+            '+' => Some(Token::Plus),
             '-' => {
-                if self.chars.peek() == Some(&'>') {
-                    self.chars.next();
-                    Some(token::arrow)
+                if self.Chars.peek() == Some(&'>') {
+                    self.Chars.next();
+                    Some(Token::Arrow)
                 } else {
-                    Some(token::minus)
+                    Some(Token::Minus)
                 }
             }
-            '*' => Some(token::star),
-            '/' => Some(token::slash),
-            '%' => Some(token::percent),
-            '=' => Some(token::equal),
-            '(' => Some(token::open_paren),
-            ')' => Some(token::close_paren),
-            '{' => Some(token::open_brace),
-            '}' => Some(token::close_brace),
-            '[' => Some(token::open_bracket),
-            ']' => Some(token::close_bracket),
-            ':' => Some(token::colon),
-            ';' => Some(token::semicolon),
-            ',' => Some(token::comma),
+            '*' => Some(Token::Star),
+            '/' => {
+                if self.Chars.peek() == Some(&'/') {
+                    // Single-line comment
+                    while let Some(c) = self.Chars.next() {
+                        if c == '\n' { break; }
+                    }
+                    self.NextToken()
+                } else {
+                    Some(Token::Slash)
+                }
+            }
+            '%' => Some(Token::Percent),
+            '=' => Some(Token::Equal),
+            '(' => Some(Token::OpenParen),
+            ')' => Some(Token::CloseParen),
+            '{' => Some(Token::OpenBrace),
+            '}' => Some(Token::CloseBrace),
+            '[' => Some(Token::OpenBracket),
+            ']' => Some(Token::CloseBracket),
+            '<' => {
+                if self.Chars.peek() == Some(&'=') {
+                    self.Chars.next();
+                    Some(Token::LessEqual)
+                } else {
+                    Some(Token::Less)
+                }
+            }
+            '>' => {
+                if self.Chars.peek() == Some(&'=') {
+                    self.Chars.next();
+                    Some(Token::GreaterEqual)
+                } else {
+                    Some(Token::Greater)
+                }
+            }
+            ':' => {
+                if self.Chars.peek() == Some(&'=') {
+                    self.Chars.next();
+                    Some(Token::TypeSet)
+                } else {
+                    Some(Token::Colon)
+                }
+            }
+            ';' => Some(Token::Semicolon),
+            ',' => Some(Token::Comma),
+            '.' => Some(Token::Dot),
+
+            // String Literals
+            '\'' => {
+                let mut s = String::new();
+                while let Some(&c) = self.Chars.peek() {
+                    if c == '\'' {
+                        self.Chars.next();
+                        return Some(Token::StringLiteral(s));
+                    }
+                    s.push(self.Chars.next().unwrap());
+                }
+                None // Unclosed string
+            }
 
             // Identifiers, Keywords, and Types
-            c if c.is_alphabetic() || c == '_' => {
-                let mut identifier = String::new();
-                identifier.push(c);
-                while let Some(&next_char) = self.chars.peek() {
-                    if next_char.is_alphanumeric() || next_char == '_' {
-                        identifier.push(self.chars.next().unwrap());
+            C if C.is_alphabetic() || C == '_' => {
+                let mut Identifier = String::new();
+                Identifier.push(C);
+                while let Some(&NextChar) = self.Chars.peek() {
+                    if NextChar.is_alphanumeric() || NextChar == '_' {
+                        Identifier.push(self.Chars.next().unwrap());
                     } else {
                         break;
                     }
                 }
 
                 // Check for keywords
-                match identifier.as_str() {
-                    "fn" => Some(token::fn_),
-                    "where" => Some(token::where_),
-                    "havoc" => Some(token::havoc),
-                    "interrupt" => Some(token::interrupt),
-                    "unreachable" => Some(token::unreachable),
-                    "panic" => Some(token::panic),
-                    "as" => Some(token::as_),
-                    "let" => Some(token::let_),
-                    "match" => Some(token::match_),
-                    "struct" => Some(token::struct_),
-                    "enum" => Some(token::enum_),
-                    other => {
+                match Identifier.as_str() {
+                    "function" => Some(Token::Function),
+                    "fn" => Some(Token::Function),
+                    "where" => Some(Token::Where),
+                    "havoc" => Some(Token::Havoc),
+                    "interrupt" => Some(Token::Interrupt),
+                    "unreachable" => Some(Token::Unreachable),
+                    "panic" => Some(Token::Panic),
+                    "as" => Some(Token::As),
+                    "var" => Some(Token::Var),
+                    "let" => Some(Token::Var),
+                    "match" => Some(Token::Match),
+                    "struct" => Some(Token::Struct),
+                    "enum" => Some(Token::Enum),
+                    Other => {
                         // Check if it's a bit-precise type (e.g., i32, u16, b8, f64)
-                        if (other.starts_with('i') || other.starts_with('u') || other.starts_with('b') || other.starts_with('f')) 
-                            && other.len() > 1 
-                            && other[1..].chars().all(|c| c.is_numeric()) 
+                        if (Other.starts_with('i') || Other.starts_with('u') || Other.starts_with('b') || Other.starts_with('f'))
+                            && Other.len() > 1
+                            && Other[1..].chars().all(|c| c.is_numeric())
                         {
-                            let kind = other.chars().next().unwrap();
-                            let bits = other[1..].parse::<u32>().unwrap_or(32);
-                            Some(token::bit_precise_type { kind, bits })
+                            let Kind = Other.chars().next().unwrap();
+                            let Bits = Other[1..].parse::<u32>().unwrap_or(32);
+                            Some(Token::BitPreciseType { Kind, Bits })
                         } else {
-                            Some(token::ident(other.to_string()))
+                            Some(Token::Ident(Other.to_string()))
                         }
                     }
                 }
             }
 
             // Numeric Literals
-            c if c.is_numeric() => {
-                let mut num = String::new();
-                num.push(c);
-                let mut is_float = false;
+            C if C.is_numeric() => {
+                let mut Num = String::new();
+                Num.push(C);
+                let mut IsFloat = false;
 
-                while let Some(&next_char) = self.chars.peek() {
-                    if next_char.is_numeric() {
-                        num.push(self.chars.next().unwrap());
-                    } else if next_char == '.' {
-                        is_float = true;
-                        num.push(self.chars.next().unwrap());
+                while let Some(&NextChar) = self.Chars.peek() {
+                    if NextChar.is_numeric() {
+                        Num.push(self.Chars.next().unwrap());
+                    } else if NextChar == '.' {
+                        IsFloat = true;
+                        Num.push(self.Chars.next().unwrap());
                     } else {
                         break;
                     }
                 }
 
-                if is_float {
-                    let val = num.parse::<f64>().unwrap_or(0.0);
-                    Some(token::float_literal(val))
+                if IsFloat {
+                    let Val = Num.parse::<f64>().unwrap_or(0.0);
+                    Some(Token::FloatLiteral(Val))
                 } else {
-                    let val = num.parse::<i64>().unwrap_or(0);
-                    Some(token::int_literal(val))
+                    let Val = Num.parse::<i64>().unwrap_or(0);
+                    Some(Token::IntLiteral(Val))
                 }
             }
 
@@ -155,10 +172,17 @@ impl<'a> lexer<'a> {
         }
     }
 
-    fn skip_whitespace(&mut self) {
-        while let Some(&ch) = self.chars.peek() {
-            if ch.is_whitespace() {
-                self.chars.next();
+    pub fn PeekToken(&mut self) -> Option<Token> {
+        if self.PeekedToken.is_none() {
+            self.PeekedToken = self.NextToken();
+        }
+        self.PeekedToken.clone()
+    }
+
+    fn SkipWhitespace(&mut self) {
+        while let Some(&Ch) = self.Chars.peek() {
+            if Ch.is_whitespace() {
+                self.Chars.next();
             } else {
                 break;
             }
@@ -166,11 +190,11 @@ impl<'a> lexer<'a> {
     }
 }
 
-impl<'a> Iterator for lexer<'a> {
-    type Item = token;
+impl<'a> Iterator for Lexer<'a> {
+    type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.next_token()
+        self.NextToken()
     }
 }
 
@@ -180,27 +204,28 @@ mod tests {
 
     #[test]
     fn test_lexer() {
-        let code = "fn main() { let x: i32 = 10; havoc x; }";
-        let tokens: Vec<token> = lexer::new(code).collect();
+        let Code = "fn main() { let x: i32 = 10; havoc x; }";
+        let Tokens: Vec<Token> = Lexer::New(Code).collect();
+        println!("{:?}", Tokens);
         assert_eq!(
-            tokens,
+            Tokens,
             vec![
-                token::fn_,
-                token::ident("main".to_string()),
-                token::open_paren,
-                token::close_paren,
-                token::open_brace,
-                token::let_,
-                token::ident("x".to_string()),
-                token::colon,
-                token::bit_precise_type { kind: 'i', bits: 32 },
-                token::equal,
-                token::int_literal(10),
-                token::semicolon,
-                token::havoc,
-                token::ident("x".to_string()),
-                token::semicolon,
-                token::close_brace,
+                Token::Function,
+                Token::Ident("main".to_string()),
+                Token::OpenParen,
+                Token::CloseParen,
+                Token::OpenBrace,
+                Token::Var,
+                Token::Ident("x".to_string()),
+                Token::Colon,
+                Token::BitPreciseType { Kind: 'i', Bits: 32 },
+                Token::Equal,
+                Token::IntLiteral(10),
+                Token::Semicolon,
+                Token::Havoc,
+                Token::Ident("x".to_string()),
+                Token::Semicolon,
+                Token::CloseBrace,
             ]
         );
     }
