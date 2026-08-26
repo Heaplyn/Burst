@@ -1,49 +1,52 @@
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+
 #[derive(Debug, Clone, PartialEq)]
-pub enum Token {
+pub enum token {
     // Keywords
-    Fn,
-    Where,
-    Havoc,
-    Interrupt,
-    Unreachable,
-    Panic,
-    As,
-    Let,
-    Match,
-    Struct,
-    Enum,
+    fn_,
+    where_,
+    havoc,
+    interrupt,
+    unreachable,
+    panic,
+    as_,
+    let_,
+    match_,
+    struct_,
+    enum_,
 
     // Identifiers and Literals
-    Ident(String),
-    IntLiteral(i64),
-    FloatLiteral(f64),
-    BitPreciseType { kind: char, bits: u32 },
+    ident(String),
+    int_literal(i64),
+    float_literal(f64),
+    bit_precise_type { kind: char, bits: u32 },
 
     // Operators and Symbols
-    Plus,
-    Minus,
-    Star,
-    Slash,
-    Percent,
-    Equal,
-    Arrow,          // ->
-    OpenParen,      // (
-    CloseParen,     // )
-    OpenBrace,      // {
-    CloseBrace,     // }
-    OpenBracket,    // [
-    CloseBracket,   // ]
-    Colon,
-    Semicolon,
-    Comma,
+    plus,
+    minus,
+    star,
+    slash,
+    percent,
+    equal,
+    arrow,          // ->
+    open_paren,      // (
+    close_paren,     // )
+    open_brace,      // {
+    close_brace,     // }
+    open_bracket,    // [
+    close_bracket,   // ]
+    colon,
+    semicolon,
+    comma,
 }
 
-pub struct Lexer<'a> {
+pub struct lexer<'a> {
     _source: &'a str,
     chars: std::iter::Peekable<std::str::Chars<'a>>,
 }
 
-impl<'a> Lexer<'a> {
+impl<'a> lexer<'a> {
     pub fn new(source: &'a str) -> Self {
         Self {
             _source: source,
@@ -51,62 +54,61 @@ impl<'a> Lexer<'a> {
         }
     }
 
-
-    pub fn next_token(&mut self) -> Option<Token> {
+    pub fn next_token(&mut self) -> Option<token> {
         self.skip_whitespace();
 
         let ch = self.chars.next()?;
 
         match ch {
             // Symbols
-            '+' => Some(Token::Plus),
+            '+' => Some(token::plus),
             '-' => {
                 if self.chars.peek() == Some(&'>') {
                     self.chars.next();
-                    Some(Token::Arrow)
+                    Some(token::arrow)
                 } else {
-                    Some(Token::Minus)
+                    Some(token::minus)
                 }
             }
-            '*' => Some(Token::Star),
-            '/' => Some(Token::Slash),
-            '%' => Some(Token::Percent),
-            '=' => Some(Token::Equal),
-            '(' => Some(Token::OpenParen),
-            ')' => Some(Token::CloseParen),
-            '{' => Some(Token::OpenBrace),
-            '}' => Some(Token::CloseBrace),
-            '[' => Some(Token::OpenBracket),
-            ']' => Some(Token::CloseBracket),
-            ':' => Some(Token::Colon),
-            ';' => Some(Token::Semicolon),
-            ',' => Some(Token::Comma),
+            '*' => Some(token::star),
+            '/' => Some(token::slash),
+            '%' => Some(token::percent),
+            '=' => Some(token::equal),
+            '(' => Some(token::open_paren),
+            ')' => Some(token::close_paren),
+            '{' => Some(token::open_brace),
+            '}' => Some(token::close_brace),
+            '[' => Some(token::open_bracket),
+            ']' => Some(token::close_bracket),
+            ':' => Some(token::colon),
+            ';' => Some(token::semicolon),
+            ',' => Some(token::comma),
 
             // Identifiers, Keywords, and Types
             c if c.is_alphabetic() || c == '_' => {
-                let mut ident = String::new();
-                ident.push(c);
+                let mut identifier = String::new();
+                identifier.push(c);
                 while let Some(&next_char) = self.chars.peek() {
                     if next_char.is_alphanumeric() || next_char == '_' {
-                        ident.push(self.chars.next().unwrap());
+                        identifier.push(self.chars.next().unwrap());
                     } else {
                         break;
                     }
                 }
 
                 // Check for keywords
-                match ident.as_str() {
-                    "fn" => Some(Token::Fn),
-                    "where" => Some(Token::Where),
-                    "havoc" => Some(Token::Havoc),
-                    "interrupt" => Some(Token::Interrupt),
-                    "unreachable" => Some(Token::Unreachable),
-                    "panic" => Some(Token::Panic),
-                    "as" => Some(Token::As),
-                    "let" => Some(Token::Let),
-                    "match" => Some(Token::Match),
-                    "struct" => Some(Token::Struct),
-                    "enum" => Some(Token::Enum),
+                match identifier.as_str() {
+                    "fn" => Some(token::fn_),
+                    "where" => Some(token::where_),
+                    "havoc" => Some(token::havoc),
+                    "interrupt" => Some(token::interrupt),
+                    "unreachable" => Some(token::unreachable),
+                    "panic" => Some(token::panic),
+                    "as" => Some(token::as_),
+                    "let" => Some(token::let_),
+                    "match" => Some(token::match_),
+                    "struct" => Some(token::struct_),
+                    "enum" => Some(token::enum_),
                     other => {
                         // Check if it's a bit-precise type (e.g., i32, u16, b8, f64)
                         if (other.starts_with('i') || other.starts_with('u') || other.starts_with('b') || other.starts_with('f')) 
@@ -115,9 +117,9 @@ impl<'a> Lexer<'a> {
                         {
                             let kind = other.chars().next().unwrap();
                             let bits = other[1..].parse::<u32>().unwrap_or(32);
-                            Some(Token::BitPreciseType { kind, bits })
+                            Some(token::bit_precise_type { kind, bits })
                         } else {
-                            Some(Token::Ident(other.to_string()))
+                            Some(token::ident(other.to_string()))
                         }
                     }
                 }
@@ -142,10 +144,10 @@ impl<'a> Lexer<'a> {
 
                 if is_float {
                     let val = num.parse::<f64>().unwrap_or(0.0);
-                    Some(Token::FloatLiteral(val))
+                    Some(token::float_literal(val))
                 } else {
                     let val = num.parse::<i64>().unwrap_or(0);
-                    Some(Token::IntLiteral(val))
+                    Some(token::int_literal(val))
                 }
             }
 
@@ -164,8 +166,8 @@ impl<'a> Lexer<'a> {
     }
 }
 
-impl<'a> Iterator for Lexer<'a> {
-    type Item = Token;
+impl<'a> Iterator for lexer<'a> {
+    type Item = token;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.next_token()
@@ -179,26 +181,26 @@ mod tests {
     #[test]
     fn test_lexer() {
         let code = "fn main() { let x: i32 = 10; havoc x; }";
-        let tokens: Vec<Token> = Lexer::new(code).collect();
+        let tokens: Vec<token> = lexer::new(code).collect();
         assert_eq!(
             tokens,
             vec![
-                Token::Fn,
-                Token::Ident("main".to_string()),
-                Token::OpenParen,
-                Token::CloseParen,
-                Token::OpenBrace,
-                Token::Let,
-                Token::Ident("x".to_string()),
-                Token::Colon,
-                Token::BitPreciseType { kind: 'i', bits: 32 },
-                Token::Equal,
-                Token::IntLiteral(10),
-                Token::Semicolon,
-                Token::Havoc,
-                Token::Ident("x".to_string()),
-                Token::Semicolon,
-                Token::CloseBrace,
+                token::fn_,
+                token::ident("main".to_string()),
+                token::open_paren,
+                token::close_paren,
+                token::open_brace,
+                token::let_,
+                token::ident("x".to_string()),
+                token::colon,
+                token::bit_precise_type { kind: 'i', bits: 32 },
+                token::equal,
+                token::int_literal(10),
+                token::semicolon,
+                token::havoc,
+                token::ident("x".to_string()),
+                token::semicolon,
+                token::close_brace,
             ]
         );
     }

@@ -1,18 +1,20 @@
-use ast::Statement;
-use lexer::Token;
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
 
+use ast::*;
+use lexer::token;
 
-pub struct Parser {
-    tokens: Vec<Token>,
+pub struct parser {
+    tokens: Vec<token>,
     position: usize,
 }
 
-impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
+impl parser {
+    pub fn new(tokens: Vec<token>) -> Self {
         Self { tokens, position: 0 }
     }
 
-    pub fn parse(&mut self) -> Result<Vec<Statement>, String> {
+    pub fn parse(&mut self) -> Result<Vec<statement>, String> {
         let mut statements = Vec::new();
         while !self.is_at_end() {
             statements.push(self.parse_statement()?);
@@ -20,28 +22,48 @@ impl Parser {
         Ok(statements)
     }
 
-    fn parse_statement(&mut self) -> Result<Statement, String> {
-        let token = self.peek();
-        match token {
-            Some(Token::Panic) => {
+    fn parse_statement(&mut self) -> Result<statement, String> {
+        let tok = self.peek();
+        match tok {
+            Some(token::panic) => {
                 self.advance();
-                self.consume(Token::Semicolon, "Expected ';' after panic")?;
-                Ok(Statement::Panic)
+                self.consume(token::semicolon, "Expected ';' after panic")?;
+                Ok(statement::panic)
             }
-            Some(Token::Unreachable) => {
+            Some(token::unreachable) => {
                 self.advance();
-                self.consume(Token::Semicolon, "Expected ';' after unreachable")?;
-                Ok(Statement::Unreachable)
+                self.consume(token::semicolon, "Expected ';' after unreachable")?;
+                Ok(statement::unreachable)
             }
-            _ => Err(format!("Unexpected token: {:?}", token)),
+            Some(token::fn_) => {
+                println!("Parsing function declaration");
+                
+                self.advance(); // Consume the 'fn' token
+                self.consume(token::open_brace, "Expected '{' after function declaration")?;
+               Ok(statement::function { name : format!("FuncComplete"), params: vec![], return_type: None, body : vec![] })
+            }
+            
+            _ => Err(format!("Unexpected token: {:?}", tok)),
+         };
+    
+    // Parse function body: { ... }
+    //self.expect(token::LBRACE)?;
+    //self.expect(token::RBRACE)?;
+    Ok(statement::function { name : format!("hi"), params: vec![], return_type: None, body : vec![] })
         }
-    }
+        
+    
+            
 
-    fn peek(&self) -> Option<&Token> {
+   
+        
+    
+
+    fn peek(&self) -> Option<&token> {
         self.tokens.get(self.position)
     }
 
-    fn advance(&mut self) -> Option<&Token> {
+    fn advance(&mut self) -> Option<&token> {
         if !self.is_at_end() {
             self.position += 1;
         }
@@ -52,7 +74,7 @@ impl Parser {
         self.position >= self.tokens.len()
     }
 
-    fn consume(&mut self, target: Token, message: &str) -> Result<(), String> {
+    fn consume(&mut self, target: token, message: &str) -> Result<(), String> {
         if self.peek() == Some(&target) {
             self.advance();
             Ok(())
@@ -68,9 +90,9 @@ mod tests {
 
     #[test]
     fn test_parser_basic() {
-        let tokens = vec![Token::Panic, Token::Semicolon];
-        let mut parser = Parser::new(tokens);
-        let ast = parser.parse().unwrap();
-        assert_eq!(ast, vec![Statement::Panic]);
+        let tokens = vec![token::panic, token::semicolon];
+        let mut p = parser::new(tokens);
+        let ast = p.parse().unwrap();
+        assert_eq!(ast, vec![statement::panic]);
     }
 }

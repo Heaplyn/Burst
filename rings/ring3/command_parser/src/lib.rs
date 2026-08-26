@@ -1,9 +1,12 @@
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(name = "burst", version = "0.1.0")]
-pub struct Cli {
+pub struct cli {
     #[arg(short, long, global = true)]
     pub verbose: bool,
 
@@ -11,13 +14,13 @@ pub struct Cli {
     pub workspace: Option<PathBuf>,
 
     #[command(subcommand)]
-    pub command: Commands,
+    pub command: commands,
 }
 
 #[derive(Subcommand, Debug, Clone)]
-pub enum Commands {
+pub enum commands {
     // compile file
-    Compile {
+    compile {
         #[arg(required = true, value_name = "FILE")]
         input: PathBuf,
 
@@ -26,18 +29,18 @@ pub enum Commands {
     },
 
     // run inline statement
-    Eval {
+    eval {
         #[arg(required = true)]
         code: String,
     },
     // run tests
-    Test {
+    test {
         #[arg(short, long)]
         filter: Option<String>,
-    }
+    },
 }
 
-impl Cli {
+impl cli {
     pub fn parse_args() -> Self {
         Self::parse()
     }

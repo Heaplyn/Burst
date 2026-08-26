@@ -1,39 +1,71 @@
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum statement {
+    panic,
+    unreachable,
+    empty,
+    let_binding {
+        name: String,
+        type_annotation: Option<Type>,
+        value: expression,
+    },
+    assignment {
+        target: expression,
+        value: expression,
+    },
+    havoc {
+        target: expression,
+    },
+    function {
+        name: String,
+        params: Vec<Param>,
+        return_type: Option<Type>,
+        body: Vec<statement>,
+    },
+    struct_declaration {
+        name: String,
+        fields: Vec<StructField>,
+    },
+    block(Vec<statement>),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum expression {
+    variable(String),
+    literal_int(i64),
+    literal_float(f64),
+    type_literal { kind: char, bits: u32 },
+    // Add more: binary_op, unary_op, function_call, etc.
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Param {
+    pub name: String,
+    pub type_: Type,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct StructField {
+    pub name: String,
+    pub type_: Type,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
-    Bitfield(u32),   // b<N>
-    Unsigned(u32),   // u<N>
-    Signed(u32),     // i<N>
-    Float(u32),      // f<N>
-    Pointer(Box<Type>),
-    Refined {
-        base: Box<Type>,
-        constraint: Box<Expression>, // Holds the "where <expr>" AST representation
-    },
+    bit_precise(char, u32),  // e.g., i32, u16, b8, f64
+    named(String),           // User-defined types
+    // Add more: pointer, array, etc.
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum Expression {
-    LiteralInt(i64),
-    LiteralFloat(f64),
-    Variable(String),
-    BinaryOp {
-        op: String,
-        lhs: Box<Expression>,
-        rhs: Box<Expression>,
-    },
-    Cast {
-        expr: Box<Expression>,
-        target_type: Box<Type>,
-    },
-}
-
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Statement {
-    LetBinding { name: String, val: Expression },
-    Assignment { target: Expression, val: Expression },
-    Havoc(Expression),
-    Panic,
-    Unreachable,
-    Interrupt { asm: String, target: Expression, body: Vec<Statement> },
+impl Type {
+    pub fn bit_precise(kind: char, bits: u32) -> Self {
+        Type::bit_precise(kind, bits)
+    }
+    
+    pub fn named(name: String) -> Self {
+        Type::named(name)
+    }
 }
