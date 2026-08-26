@@ -32,7 +32,7 @@ fn RunPipeline(SourceCode: &str, Verbose: bool) {
             println!("Verification & Compilation Successful!");
         }
         Err(E) => {
-            eprintln!("Parsing Error: {}", E);
+            eprintln!("Parsing Error: {} Line: {}", E,P.Peek().map(|t| t.Line).unwrap_or(0));
         }
     }
 }

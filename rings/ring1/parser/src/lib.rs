@@ -71,11 +71,29 @@ impl Parser {
     fn ParseNameAndType(&mut self, context: &str) -> Result<(String, Type), String> {
         let mut is_colon_style = false;
         let mut offset = 0;
-        while let Some(t) = self.PeekAt(offset).map(|tk| &tk.Kind) {
+       /*  while let Some(t) = self.PeekAt(offset).map(|tk| &tk.Kind) {
             if matches!(t, TokenKind::Colon) { is_colon_style = true; break; }
             if matches!(t, TokenKind::Comma) || matches!(t, TokenKind::Semicolon) || matches!(t, TokenKind::CloseParen) || matches!(t, TokenKind::CloseBrace) { break; }
             offset += 1;
+        }*/
+       // 1. check if the very first token is definitely a type
+let starts_with_type = matches!(
+    self.Peek().map(|t| &t.Kind), 
+    Some(TokenKind::BitPreciseType { .. }) | Some(TokenKind::Star)
+);
+
+if !starts_with_type {
+    let mut offset = 0;
+    while let Some(t) = self.PeekAt(offset).map(|tk| &tk.Kind) {
+        if matches!(t, TokenKind::Colon) { 
+            is_colon_style = true; 
+            break; 
         }
+        // stop if we hit something that ends a name/type pair
+        if matches!(t, TokenKind::Comma) || matches!(t, TokenKind::CloseParen) { break; }
+        offset += 1;
+    }
+}
         println!("{}", format!("is_colon_style: {}", is_colon_style));
         println!("{}", format!("Peeked tokens: {:?}", (0..offset).filter_map(|i| self.PeekAt(i)).collect::<Vec<_>>()));
         let (name, mut ty) = if is_colon_style {
@@ -443,12 +461,12 @@ impl Parser {
     }
 
     /// look at the current token
-    fn Peek(&self) -> Option<&Token> {
+    pub fn Peek(&self) -> Option<&Token> {
         self.Tokens.get(self.Position)
     }
 
     /// look ahead by a specific amount
-    fn PeekAt(&self, Offset: usize) -> Option<&Token> {
+    pub fn PeekAt(&self, Offset: usize) -> Option<&Token> {
         self.Tokens.get(self.Position + Offset)
     }
 
@@ -486,7 +504,7 @@ impl Parser {
             self.Advance();
             Ok(())
         } else {
-            Err(format!("{}. Found {:?}", Message, self.Peek()))
+            Err(format!("{}. Found {:?}, at line {}", Message, self.Peek(),self.Tokens[self.Position].Line))
         }
     }
 }
