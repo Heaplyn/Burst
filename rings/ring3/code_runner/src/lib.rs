@@ -3,6 +3,7 @@
 
 use ast;
 use ast::*;
+use std::collections::*;
 use config::*;
 use lexer::*;
 use parser::*;
@@ -27,7 +28,7 @@ pub enum CompilerError {
 // ============================================
 // Code Runner
 // ============================================
-#[derive(Debug, Clone, PartialEq,Default)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct CompilerConfig {
     
 }
@@ -75,20 +76,20 @@ impl CodeRunner {
         }
     }
 
-    fn EvaluateBinaryOp(&mut self, Op: &BinaryOp, Lhs: Value, Rhs: Value) -> CompilerResult<Value> {
+    fn EvaluateBinaryOp(&mut self, Op: &str, Lhs: Value, Rhs: Value) -> CompilerResult<Value> {
         match (Op, Lhs, Rhs) {
-            (BinaryOp::Add, Value::Int(Lhs), Value::Int(Rhs)) => Ok(Value::Int(Lhs + Rhs)),
-            (BinaryOp::Sub, Value::Int(Lhs), Value::Int(Rhs)) => Ok(Value::Int(Lhs - Rhs)),
-            (BinaryOp::Mul, Value::Int(Lhs), Value::Int(Rhs)) => Ok(Value::Int(Lhs * Rhs)),
-            (BinaryOp::Div, Value::Int(Lhs), Value::Int(Rhs)) => {
+            ("+", Value::Int(Lhs), Value::Int(Rhs)) => Ok(Value::Int(Lhs + Rhs)),
+            ("-", Value::Int(Lhs), Value::Int(Rhs)) => Ok(Value::Int(Lhs - Rhs)),
+            ("*", Value::Int(Lhs), Value::Int(Rhs)) => Ok(Value::Int(Lhs * Rhs)),
+            ("/", Value::Int(Lhs), Value::Int(Rhs)) => {
                 if Rhs == 0 {
                     Err(CompilerError::RuntimeError("Division by zero".to_string()))
                 } else {
                     Ok(Value::Int(Lhs / Rhs))
                 }
             }
-            (BinaryOp::Add, Value::Float(Lhs), Value::Float(Rhs)) => Ok(Value::Float(Lhs + Rhs)),
-            _ => Err(CompilerError::RuntimeError("Invalid binary operation".to_string())),
+            ("+", Value::Float(Lhs), Value::Float(Rhs)) => Ok(Value::Float(Lhs + Rhs)),
+            _ => Err(CompilerError::RuntimeError(format!("Invalid binary operation: {}", Op))),
         }
     }
 
@@ -138,12 +139,43 @@ impl CodeRunner {
 
                 // Run on_assign hooks
                 for Hook in Hooks {
-                    // Fix: Pattern match on the hook
-                    match Hook {
-                        VariableHook::OnAssign { Handler } => {
-                            Value = Handler(Value, &mut self.Context)?;
+                    if Hook.Kind != HookKind::OnAssign { continue; }
+                    for child_kind in &Hook.Body {
+                        if let LayerKind::Function { Name, Params, ReturnType, .. } = child_kind {
+                            // Create a temporary Layer to run the function
+                            let temp_func_layer = Layer {
+                                Id: LayerId { Id: 0 }, // Placeholder ID
+                                Kind: child_kind.clone(),
+                                Metadata: LayerMetadata {
+                                    SourceLocation: SourceLocation::Builtin(),
+                                    Docs: None,
+                                    Directives: Vec::new(),
+                                    Optimization: OptimizationHints {
+                                        AggressiveLoopFolding: false,
+                                        TraceObservability: ObservabilityMode::Strict,
+                                        RegisterPressure: RegisterPressureMode::Auto,
+                                        InlineThreshold: None,
+                                    },
+                                    Custom: std::collections::HashMap::new(),
+                                },
+                                Children: vec![], // The body statements
+                                Constraints: vec![],
+                                Observability: ObservabilityFlags {
+                                    ObservableValues: Vec::new(),
+                                    AffectsOutput: true,
+                                    AffectsHardware: true,
+                                    ObservableToTrace: true,
+                                },
+                                TypeStorage: TypeStorage::default(),
+                                TraceInfo: TraceInfo {
+                                    TraceId: "unknown".to_string(),
+                                    Depth: 0,
+                                    Context: ast::TraceContext::Root,
+                                    TypeEnv: TypeStorage::default(),
+                                },
+                            };
+                            Value = self.RunLayer(&temp_func_layer)?;
                         }
-                        _ => {}
                     }
                 }
 
@@ -152,11 +184,43 @@ impl CodeRunner {
 
                 // Run on_change hooks
                 for Hook in Hooks {
-                    match Hook {
-                        VariableHook::OnChange { Handler } => {
-                            Handler(&Value, &Value, &mut self.Context)?;
+                    if Hook.Kind != HookKind::OnChange { continue; }
+                    for child_kind in &Hook.Body {
+                        if let LayerKind::Function { Name, Params, ReturnType, .. } = child_kind {
+                            // Create a temporary Layer to run the function
+                            let temp_func_layer = Layer {
+                                Id: LayerId { Id: 0 }, // Placeholder ID
+                                Kind: child_kind.clone(),
+                                Metadata: LayerMetadata {
+                                    SourceLocation: SourceLocation::Builtin(),
+                                    Docs: None,
+                                    Directives: Vec::new(),
+                                    Optimization: OptimizationHints {
+                                        AggressiveLoopFolding: false,
+                                        TraceObservability: ObservabilityMode::Strict,
+                                        RegisterPressure: RegisterPressureMode::Auto,
+                                        InlineThreshold: None,
+                                    },
+                                    Custom: std::collections::HashMap::new(),
+                                },
+                                Children: vec![], // The body statements
+                                Constraints: vec![],
+                                Observability: ObservabilityFlags {
+                                    ObservableValues: Vec::new(),
+                                    AffectsOutput: true,
+                                    AffectsHardware: true,
+                                    ObservableToTrace: true,
+                                },
+                                TypeStorage: TypeStorage::default(),
+                                TraceInfo: TraceInfo {
+                                    TraceId: "unknown".to_string(),
+                                    Depth: 0,
+                                    Context: ast::TraceContext::Root,
+                                    TypeEnv: TypeStorage::default(),
+                                },
+                            };
+                            self.RunLayer(&temp_func_layer)?;
                         }
-                        _ => {}
                     }
                 }
 
@@ -220,7 +284,7 @@ impl CodeRunner {
 
     pub fn RunCode(&mut self, Layers: &[Layer]) -> CompilerResult<Value> {
         // Build trace from layers
-        self.Trace = LayerTrace::New(Layers);
+        self.Trace = LayerTrace::NewFrom(Layers);
         
         // Find main function
         let MainLayer = self.FindMainFunction(Layers)?;
@@ -375,13 +439,13 @@ pub struct LayerTrace {
 }
 
 impl LayerTrace {
-    pub fn New_Layers(Layers: impl AsRef<[Layer]>) -> Self {
+
+    pub fn NewFrom(_Layers: &[Layer]) -> Self {
         Self {
             Events: Vec::new(),
         }
     }
-
-    pub fn New(_Layers: &[Layer]) -> Self {
+    pub fn New() -> Self {
         Self {
             Events: Vec::new(),
         }

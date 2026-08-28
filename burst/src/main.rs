@@ -5,6 +5,7 @@ use lexer::Lexer as LexerStruct;
 use parser::Parser as ParserStruct;
 use elaboration::ElaborationContext;
 use command_parser::{Cli, Commands};
+use code_runner::*;
 
 /// runs the lexer, parser, and elaborator in order
 fn RunPipeline(SourceCode: &str, Verbose: bool) {
@@ -30,6 +31,13 @@ fn RunPipeline(SourceCode: &str, Verbose: bool) {
                 return;
             }
             println!("Verification & Compilation Successful!");
+            let mut NewRunner = CodeRunner::New({
+                CompilerConfig {}
+            });
+            NewRunner.RunCode(&Ast.Children);
+            
+            
+            
             //println!("Tokens: {:?}",Ast.Children);
         }
         Err(E) => {

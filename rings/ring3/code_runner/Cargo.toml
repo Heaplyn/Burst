@@ -1,5 +1,5 @@
 [package]
-name = "command_runner"
+name = "code_runner"
 version = "0.1.1"
 edition = "2024"
 

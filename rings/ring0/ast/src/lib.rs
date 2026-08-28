@@ -36,11 +36,12 @@ pub struct Layer {
     pub TypeStorage: TypeStorage,
     /// runtime info for layertrace
     pub TraceInfo: TraceInfo,
+    
 }
 
 /// just a wrapper for layer string ids
 #[derive(Debug, Clone, PartialEq, Hash, Eq)]
-pub struct LayerId(usize );
+pub struct LayerId { pub Id: usize }
 
 /// all the different things a layer can represent
 #[derive(Debug, Clone, PartialEq)]
@@ -63,6 +64,8 @@ pub enum LayerKind {
         Hooks: Vec<VariableHook>,
         InitialValue: Option<Expression>,
     },
+
+    VariableHook (VariableHook, Expression),
     /// updating an existing variable
     Assignment {
         Target: Expression,
@@ -110,6 +113,10 @@ pub enum LayerKind {
         Name: String,
         Variants: Vec<EnumVariant>,
     },
+    /// returning a value from a function
+    Return {
+        Value: Option<Expression>,
+    },
 }
 
 /// the specific flavor of the loop
@@ -147,7 +154,7 @@ impl LayerBuilder {
     pub fn New(kind: LayerKind, source_location: SourceLocation) -> Self {
         Self {
             layer: Layer {
-                Id: LayerId( LayerAddress.fetch_add(1, Ordering::SeqCst)),
+                Id: LayerId{Id: LayerAddress.fetch_add(1, Ordering::SeqCst)},
                 Kind: kind,
                 Metadata: LayerMetadata {
                     SourceLocation: source_location,
@@ -208,6 +215,7 @@ impl LayerBuilder {
     pub fn Build(self) -> Layer {
         self.layer
     }
+    
 }
 
 impl Layer {

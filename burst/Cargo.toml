@@ -9,3 +9,4 @@ ast = { path = "../rings/ring0/ast" }
 parser = { path = "../rings/ring1/parser" }
 elaboration = { path = "../rings/ring2/elaboration" }
 command_parser = { path = "../rings/ring3/command_parser" }
+code_runner = {path = "../rings/ring3/code_runner"}

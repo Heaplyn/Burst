@@ -107,6 +107,12 @@ pub enum Pattern {
 pub struct VariableHook {
     pub Kind: HookKind,
     pub Body: Vec<LayerKind>,
+    
+}
+impl VariableHook {
+    pub fn New(Kind: HookKind, Body: Vec<LayerKind>) -> Self {
+        Self { Kind, Body }
+    }
 }
 
 /// the different kinds of variable behaviors
@@ -265,6 +271,17 @@ pub struct TraceInfo {
     pub Depth: usize,
     pub Context: TraceContext,
     pub TypeEnv: TypeStorage,
+}
+
+impl TraceInfo {
+    pub fn default() -> Self {
+        Self {
+            TraceId: String::new(),
+            Depth: 0,
+            Context: TraceContext::Root,
+            TypeEnv: TypeStorage::default(),
+        }
+    }
 }
 
 /// what the trace is actually inside of

@@ -4,7 +4,7 @@ fn process_score(u32 score: where score <= 100) {
     output_trace('SCORE', score as b8);
 }
 
-fn main() {
+function main() {
     // Statically proven safe, compiles cleanly.
     process_score(85);
 
