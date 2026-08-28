@@ -142,8 +142,8 @@ impl<'a> Lexer<'a> {
 
                 match identifier.as_str() {
                     "function" | "fn" => TokenKind::Function,
-                    "var" => TokenKind::Var,
-                    "let" => TokenKind::Let,
+                    "var" => TokenKind::Let(true),
+                    "let" => TokenKind::Let(false),
                     "mut" => TokenKind::Mut,
                     "where" => TokenKind::Where,
                     "havoc" => TokenKind::Havoc,
@@ -243,6 +243,6 @@ mod tests {
     fn test_lexer() {
         let Code = "fn main() { var x: i32 = 10; havoc x; }";
         let Tokens: Vec<Token> = Lexer::New(Code).collect();
-        assert_eq!(Tokens[5].Kind, TokenKind::Var);
+        assert_eq!(Tokens[5].Kind, TokenKind::Let(true));
     }
 }

@@ -1,0 +1,12 @@
+[package]
+name = "command_runner"
+version = "0.1.1"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+ast = { path = "../../ring0/ast" }
+config = { path = "../../ring0/config" }
+lexer = { path = "../../ring0/lexer" }
+parser = { path = "../../ring1/parser" }
+elaboration = { path = "../../ring2/elaboration" }

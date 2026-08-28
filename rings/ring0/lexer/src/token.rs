@@ -9,15 +9,20 @@ pub struct Token {
     pub Column: usize,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct Variable<Type> {
+    /// what the token actually is (var ident etc)
+    pub MemoryAddress:usize,
+    Value:Type
+}
+
 /// the different kinds of words and symbols
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
     // ===== Keywords =====
     Function,
-    /// mutable by default
-    Var,
-    /// immutable by default
-    Let,
+    /// immutable by default, set true to be mutable on the arg
+    Let(bool),
     Mut,
     Return,
     Struct,

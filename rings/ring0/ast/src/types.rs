@@ -188,6 +188,12 @@ pub enum Directive {
     Extern,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum CompilerResult {
+    Error(usize),//ErrorCode
+    Success,
+}
+
 /// hints for the optimizer to go fast
 #[derive(Debug, Clone, PartialEq)]
 pub struct OptimizationHints {

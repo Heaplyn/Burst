@@ -30,6 +30,7 @@ fn RunPipeline(SourceCode: &str, Verbose: bool) {
                 return;
             }
             println!("Verification & Compilation Successful!");
+            //println!("Tokens: {:?}",Ast.Children);
         }
         Err(E) => {
             eprintln!("Parsing Error: {} Line: {}", E,P.Peek().map(|t| t.Line).unwrap_or(0));

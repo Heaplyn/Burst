@@ -36,6 +36,7 @@ impl ElaborationContext {
             }
             LayerKind::VariableBinding { Name, TypeAnnotation, .. } => {
                 self.KnownVars.insert(Name.clone());
+                
                 if let Some(Type::Where(_, constraint)) = TypeAnnotation {
                     let smt = self.TranslateToSmt(constraint)?;
                     self.Constraints.push(format!("(assert {})", smt));

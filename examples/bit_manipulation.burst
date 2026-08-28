@@ -5,7 +5,7 @@ struct Flags {
     reserved: b6;
 }
 
-fn main() {
+function main() {
     // A raw 8-bit value (e.g., from a hardware register)
     var status: b8 = 0x01;
 

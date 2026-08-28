@@ -172,7 +172,7 @@ impl Parser {
                 self.Match(TokenKind::Semicolon);
                 Ok(LayerBuilder::New(LayerKind::Unreachable, SourceLocation::Builtin()).Build())
             }
-            Some(TokenKind::Var) | Some(TokenKind::Let) => self.ParseVariableBinding(),
+            Some(TokenKind::Let(true|false)) => self.ParseVariableBinding(),
             Some(TokenKind::Havoc) => {
                 self.Advance();
                 let Expr = self.ParseExpression()?;
@@ -255,7 +255,7 @@ impl Parser {
 
     /// parses variable bindings with optional hooks
     pub fn ParseVariableBinding(&mut self) -> Result<Layer, String> {
-        let is_mutable = matches!(self.Advance().map(|t| &t.Kind), Some(TokenKind::Var));
+        let is_mutable = matches!(self.Advance().map(|t| &t.Kind), Some(TokenKind::Let(true)));
 
         let (Name, TypeAnnotation) = self.ParseNameAndType("variable")?;
 

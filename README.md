@@ -32,9 +32,8 @@ in burst, we don't have "statements" or "expressions" in a flat list. everything
 - layers hold **logical constraints** that tell the compiler how they can be optimized.
 
 ### smart mutability
-we skipped the `mut` keyword mess. 
 - **`var`**: always mutable. you can change it whenever.
-- **`let`**: strictly immutable. set it once and it's locked.
+- **`let`**: You can do mut to make it mutable.
 
 ### zero-cost safety (smt & refinements)
 we use refinement types to prove code is safe *before* it runs. if you have a variable `x: u32 where x < 10`, the elaborator translates that into **smt-lib v2** logic.

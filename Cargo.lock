@@ -122,6 +122,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "command_runner"
+version = "0.1.1"
+dependencies = [
+ "ast",
+ "clap",
+ "config",
+ "elaboration",
+ "lexer",
+ "parser",
+]
+
+[[package]]
+name = "config"
+version = "0.1.1"
+
+[[package]]
 name = "elaboration"
 version = "0.1.0"
 dependencies = [

@@ -1,11 +1,22 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
+#![allow(non_upper_case_globals)]
+
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub mod types;
 pub use types::*;
 
+
 use std::collections::HashMap;
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum BinaryOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
+}
 /// the main building block for all code in burst
 #[derive(Debug, Clone, PartialEq)]
 pub struct Layer {
@@ -29,7 +40,7 @@ pub struct Layer {
 
 /// just a wrapper for layer string ids
 #[derive(Debug, Clone, PartialEq, Hash, Eq)]
-pub struct LayerId(pub String);
+pub struct LayerId(usize );
 
 /// all the different things a layer can represent
 #[derive(Debug, Clone, PartialEq)]
@@ -130,16 +141,13 @@ pub struct LayerMetadata {
 pub struct LayerBuilder {
     layer: Layer,
 }
-
+pub static LayerAddress: AtomicUsize = AtomicUsize::new(0);
 impl LayerBuilder {
     /// starts a new layer builder with a timestamped id
     pub fn New(kind: LayerKind, source_location: SourceLocation) -> Self {
         Self {
             layer: Layer {
-                Id: LayerId(format!("layer_{}", std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap()
-                    .as_micros())),
+                Id: LayerId( LayerAddress.fetch_add(1, Ordering::SeqCst)),
                 Kind: kind,
                 Metadata: LayerMetadata {
                     SourceLocation: source_location,
