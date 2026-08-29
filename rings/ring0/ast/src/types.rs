@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use crate::{LayerKind, LayerId};
 
-/// the actual types for burst rn
+/// the actual types for layerscript rn
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     /// bit precise stuff like i32 or b8

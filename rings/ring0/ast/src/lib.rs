@@ -17,7 +17,7 @@ pub enum BinaryOp {
     Mul,
     Div,
 }
-/// the main building block for all code in burst
+/// the main building block for all code in layerscript
 #[derive(Debug, Clone, PartialEq)]
 pub struct Layer {
     /// unique id for this layer

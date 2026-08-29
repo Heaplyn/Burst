@@ -1,0 +1,247 @@
+{
+  "main": {
+    "id": "6f321523de7905c3",
+    "type": "split",
+    "children": [
+      {
+        "id": "e915fa4f2247f736",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b746ee5ab27cdd6d",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Message 1.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Message 1"
+            }
+          },
+          {
+            "id": "82c164887f1c7885",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Complete Gameplan.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Complete Gameplan"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "a2c1dc457f98f590",
+    "type": "split",
+    "children": [
+      {
+        "id": "fac6ced0db6701fa",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "01fdf1560275411d",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "851335dbb146bc4b",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "b1cbf2d12321b5be",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "d768953e8a4441f1",
+    "type": "split",
+    "children": [
+      {
+        "id": "bc78d50c9f9b70e5",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "feef0ccaf22afc14",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Compiler Mechanics/Parser and Lexer.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "8c31482ff08ca56c",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Compiler Mechanics/Parser and Lexer.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "ca920a8e21268bfe",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "6d0a8217b5b6a7c1",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "26e30f1e0870f416",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Compiler Mechanics/Parser and Lexer.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "82c164887f1c7885",
+  "lastOpenFiles": [
+    "Compiler Mechanics/Parser and Lexer.md",
+    "Compiler Mechanics/Codebase Navigation.md",
+    "Compiler Mechanics/Type Checking and Inference.md",
+    "Language Specification/Layer System.md",
+    "API and Standard Library/Core Library Reference.md",
+    "API and Standard Library/Built-in Types Reference.md",
+    "Compiler Mechanics/Elaboration and Constraints.md",
+    "Language Specification/First-Class Types and Generics.md",
+    "Tutorials and Examples/Layer System Examples.md",
+    "Bare Metal Interfacing/FFI and extern.md",
+    "Bare Metal Interfacing/Memory Layout and Packing.md",
+    "Execution Model/Variable Behavior Hooks Runtime.md",
+    "Type System and Coercions/Refined Types.md",
+    "Language Specification/Functions and Procedures.md",
+    "Type System and Coercions/Type Storage and Inheritance.md",
+    "Execution Model/layertrace Runtime.md",
+    "Language Specification/Variables and Hooks.md",
+    "Type System and Coercions/Coercion Guide.md",
+    "Type System and Coercions",
+    "Bare Metal Interfacing/havoc_register_tracking.mmd",
+    "Bare Metal Interfacing/Hardware and Havoc.md",
+    "Bare Metal Interfacing",
+    "Compiler Mechanics/Compiler Implementation.md",
+    "Language Specification/Syntax and Grammar.md",
+    "Home.md",
+    "Tutorials and Examples/Standard Algorithms.md",
+    "Bare Metal/Hardware and Havoc.md",
+    "Language Specification/Base and Compound Types.md",
+    "Message 1.md",
+    "Tutorials and Examples",
+    "Language Specification",
+    "API and Standard Library",
+    "Graphs/havoc_register_spill.jpg",
+    "Graphs/burst_compiler_pipeline.jpg",
+    "Bare Metal/havoc_register_tracking.mmd",
+    "Execution Model/pomset_scheduling.mmd",
+    "Compiler Mechanics/observability_boundary.mmd",
+    "Compiler Mechanics/elaboration_phase.mmd"
+  ]
+}

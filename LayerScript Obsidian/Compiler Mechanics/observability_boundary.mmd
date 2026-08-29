@@ -1,0 +1,25 @@
+graph LR
+    subgraph User Code
+        V1[Alloc: [i32; 1000]]
+        V2[Local math loop]
+        V3[Volatile write to hardware port]
+        V4[Print error message to stdout]
+        V5[Unused intermediate string alloc]
+    end
+
+    subgraph Observability Filter
+        V1 -->|No trace dependencies| Eliminated[ELIMINATED]
+        V2 -->|Folded into constant expression| ClosedForm[REDUCED TO CONSTANT]
+        V3 -->|Crosses hardware interface| Kept[PRESERVED IN MACHINE CODE]
+        V4 -->|Crosses standard I/O| Kept
+        V5 -->|No side effects| Eliminated
+    end
+
+    subgraph Target Output
+        Kept --> Assembly[Emit Assembly Instruction]
+        ClosedForm --> Assembly
+    end
+
+    style Eliminated fill:#f44,stroke:#d32,color:#fff
+    style ClosedForm fill:#ff9800,stroke:#f57c00,color:#fff
+    style Kept fill:#4CA,stroke:#388,color:#fff

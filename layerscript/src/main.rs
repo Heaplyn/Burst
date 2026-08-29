@@ -30,10 +30,13 @@ fn RunPipeline(SourceCode: &str, Verbose: bool) {
                 eprintln!("Elaboration Error: {}", E);
                 return;
             }
+            
             println!("Verification & Compilation Successful!");
             let mut NewRunner = CodeRunner::New({
-                CompilerConfig {}
+                CompilerConfig {},ElabCtx
             });
+            println!("Running code...");
+            println!("{:?}", NewRunner);
             NewRunner.RunCode(&Ast.Children);
             
             

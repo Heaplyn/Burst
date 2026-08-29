@@ -1,6 +1,6 @@
-# Burst: The Principle of Most Speed
+# LayerScript: The Principle of Most Speed
 
-burst is a bare-metal systems language built for one thing: speed. we don't just compile code; we model it as a graph of traces and use math to delete every check the computer doesn't absolutely need.
+layerscript is a bare-metal systems language built for one thing: speed. we don't just compile code; we model it as a graph of traces and use math to delete every check the computer doesn't absolutely need.
 
 ## 🏗️ ring architecture
 
@@ -18,7 +18,7 @@ graph TD
     A[Ring 0: AST & Lexer] --> B[Ring 1: Parser]
     B --> C[Ring 2: Elaboration]
     C --> D[Ring 3: Command Parser]
-    D --> E[Driver: Burst CLI]
+    D --> E[Driver: LayerScript CLI]
 ```
 
 ---
@@ -26,7 +26,7 @@ graph TD
 ## 🚀 how it works
 
 ### everything is a layer
-in burst, we don't have "statements" or "expressions" in a flat list. everything—from the whole program down to a single variable hook—is a **layer**. 
+in layerscript, we don't have "statements" or "expressions" in a flat list. everything—from the whole program down to a single variable hook—is a **layer**. 
 - layers can have children (nested code).
 - layers track their own metadata (docs, line numbers).
 - layers hold **logical constraints** that tell the compiler how they can be optimized.
@@ -63,8 +63,8 @@ this keeps our logic separate from standard rust libraries and makes the ring bo
 cargo check
 
 # run a compile on the examples
-cargo run -- compile examples/refinement.burst
-cargo run -- compile examples/variable_hooks.burst
+cargo run -- compile examples/refinement.layerscript
+cargo run -- compile examples/variable_hooks.layerscript
 ```
 
-check the [obsidian vault](file:///C:/Users/Kyle/Documents/Burst%20Language) for the full specs. 🚀
+check the LayerScript obsidian vault for the full specs. 🚀

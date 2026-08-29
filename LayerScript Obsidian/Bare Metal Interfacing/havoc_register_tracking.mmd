@@ -1,0 +1,21 @@
+graph TD
+    subgraph Register State Tracking
+        InitState["Compiler State:<br>RAX = cached value X<br>RBX = cached value Y<br>RCX = cached value Z"] --> InterruptBlock
+        
+        InterruptBlock["Interrupt block executes:<br>int 0x10"] --> HavocCheck{Evaluate havoc list}
+        
+        HavocCheck -->|havoc RAX| InvalidateRAX["Invalidate RAX:<br>Register state is now unknown"]
+        HavocCheck -->|No havoc RBX| KeepRBX["Keep RBX:<br>Compiler assumes RBX is still Y"]
+        HavocCheck -->|No havoc RCX| KeepRCX["Keep RCX:<br>Compiler assumes RCX is still Z"]
+        
+        InvalidateRAX --> NextUse
+        KeepRBX --> NextUse
+        KeepRCX --> NextUse
+        
+        NextUse["Next Instruction Context"] --> ReadRAX["Use RAX:<br>Must reload RAX from memory / port"]
+        NextUse --> ReadRBX["Use RBX:<br>Direct reuse! No memory load instruction emitted"]
+    end
+
+    style InvalidateRAX fill:#f44,stroke:#d32,color:#fff
+    style KeepRBX fill:#4CA,stroke:#388,color:#fff
+    style KeepRCX fill:#4CA,stroke:#388,color:#fff

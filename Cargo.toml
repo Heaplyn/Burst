@@ -6,7 +6,7 @@ members = [
     "rings/ring2/elaboration",
     "rings/ring3/command_parser",
     "rings/ring3/code_runner",
-    "burst",
+    "layerscript",
     
 ]
 resolver = "2"

@@ -1,0 +1,27 @@
+graph TD
+    subgraph Compiler Frontend
+        AST[Abstract Syntax Tree] --> MatchConst[Constraint Matcher]
+    end
+
+    subgraph Elaboration & Proof Synthesis
+        MatchConst -->|Extract Preconditions| PathConds[Extract Path Conditions]
+        PathConds -->|Define SMT Formula| Z3Context[Z3 Context Initialization]
+        
+        Z3Context --> Solve{Evaluate Negated Condition}
+        
+        Solve -->|UNSATISFIABLE<br>Counterexample Impossible| Proven[Synthesize Proof: Erase h]
+        Solve -->|SATISFIABLE<br>Counterexample Exists| Error{Is Strict Mode?}
+        Solve -->|TIMEOUT / UNKNOWN| Error
+        
+        Error -->|Yes| Fail[Compile-Time Proof Error]
+        Error -->|No| SafePanic[Inject @silent Runtime Panic Branch]
+    end
+
+    subgraph Codegen Output
+        Proven --> EmitAssembly[Emit Naked CPU Instruction]
+        SafePanic --> EmitBranch[Emit CPU Compare & Conditional Jump to Panic]
+    end
+
+    style Fail fill:#f44,stroke:#d32,color:#fff
+    style EmitAssembly fill:#4CA,stroke:#388,color:#fff
+    style EmitBranch fill:#ff9800,stroke:#f57c00,color:#fff

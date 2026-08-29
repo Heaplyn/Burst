@@ -1,0 +1,22 @@
+graph TD
+    subgraph POMSET Execution Graph
+        Start([Start Program]) --> Trace1["Trace 1: Read Disk Config<br>(I/O Wait, Observable)"]
+        Start --> Trace2["Trace 2: Init Memory Allocations<br>(Pure Computation)"]
+        
+        Trace2 --> Trace3["Trace 3: Compute Matrix Multiplications<br>(Parallel Chunk A)"]
+        Trace2 --> Trace4["Trace 4: Compute Matrix Multiplications<br>(Parallel Chunk B)"]
+        
+        Trace1 --> Trace5["Trace 5: Acknowledge Config Load<br>(Observable System Call)"]
+        Trace3 --> Trace6["Trace 6: Reduce Results<br>(Barrier Sync)"]
+        Trace4 --> Trace6
+        
+        Trace5 --> Trace7["Trace 7: Final Render Out<br>(Observable Frame Output)"]
+        Trace6 --> Trace7
+        Trace7 --> End([End Program])
+    end
+
+    style Start fill:#4CAF50,stroke:#388E3C,stroke-width:2px,color:#fff
+    style End fill:#F44336,stroke:#D32F2F,stroke-width:2px,color:#fff
+    style Trace1 fill:#2196F3,stroke:#1976D2,stroke-width:2px,color:#fff
+    style Trace5 fill:#2196F3,stroke:#1976D2,stroke-width:2px,color:#fff
+    style Trace7 fill:#2196F3,stroke:#1976D2,stroke-width:2px,color:#fff

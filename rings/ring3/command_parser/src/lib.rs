@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 /// the command line interface structure
 #[derive(Parser, Debug)]
-#[command(name = "burst", version = "0.1.0")]
+#[command(name = "layerscript", version = "0.1.0")]
 pub struct Cli {
     /// show more logs
     #[arg(short, long, global = true)]
@@ -21,10 +21,10 @@ pub struct Cli {
     pub Command: Commands,
 }
 
-/// the different things burst can do
+/// the different things layerscript can do
 #[derive(Subcommand, Debug, Clone)]
 pub enum Commands {
-    /// turn burst code into binary
+    /// turn layerscript code into binary
     Compile {
         /// the file to read
         #[arg(required = true, value_name = "FILE")]
@@ -37,7 +37,7 @@ pub enum Commands {
 
     /// run a tiny script in the repl
     Eval {
-        /// the burst code string
+        /// the layerscript code string
         #[arg(required = true)]
         Code: String,
     },

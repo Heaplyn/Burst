@@ -4,6 +4,7 @@
 use ast;
 use ast::*;
 use std::collections::*;
+use std::task::Context;
 use config::*;
 use lexer::*;
 use parser::*;
@@ -38,16 +39,17 @@ impl CompilerConfig {
         }
     }
 }
+#[derive(Debug, Clone)]
 pub struct CodeRunner {
-    Context: ExecutionContext,
+    Context: ElaborationContext,
     Trace: LayerTrace,
     Config: CompilerConfig,
 }
 
 impl CodeRunner {
-    pub fn New(Config: CompilerConfig) -> Self {
+    pub fn New(Config: CompilerConfig,Context: ElaborationContext) -> Self {
         Self {
-            Context: ExecutionContext::New(),
+            Context,
             Trace: LayerTrace::New(),
             Config,
         }
@@ -466,7 +468,7 @@ mod tests {
 
     #[test]
     fn test_evaluate_literal_int() {
-        let mut Runner = CodeRunner::New(CompilerConfig::default());
+        let mut Runner = CodeRunner::New(CompilerConfig::default(), ElaborationContext::New());
         let Expr = Expression::LiteralInt(42);
         let Result = Runner.EvaluateExpression(&Expr).unwrap();
         assert_eq!(Result, Value::Int(42));
@@ -474,7 +476,7 @@ mod tests {
 
     #[test]
     fn test_evaluate_binary_add() {
-        let mut Runner = CodeRunner::New(CompilerConfig::default());
+        let mut Runner = CodeRunner::New(CompilerConfig::default(),ElaborationContext::New());
         let Expr = Expression::BinaryOp {
             Op: "+".to_string(),
             Lhs: Box::new(Expression::LiteralInt(5)),
