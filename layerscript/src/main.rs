@@ -6,6 +6,7 @@ use parser::Parser as ParserStruct;
 use elaboration::ElaborationContext;
 use command_parser::{Cli, Commands};
 use code_runner::*;
+use lexer::token::*;
 
 /// runs the lexer, parser, and elaborator in order
 fn RunPipeline(SourceCode: &str, Verbose: bool) {
@@ -33,15 +34,15 @@ fn RunPipeline(SourceCode: &str, Verbose: bool) {
             
             println!("Verification & Compilation Successful!");
             let mut NewRunner = CodeRunner::New(CompilerConfig::New());
-            println!("Running code...");
+            println!("Running code...\n\n");
             // Use debug print if we want to print CodeRunner
             // (Note: CodeRunner derives Debug)
             let RunnerCode = NewRunner.RunCode(&[Ast]);
-            println!("Runner initialized.");
-            match RunnerCode {
+            let Peek = P.PeekAt(-1);
+            /*match RunnerCode {
                 Ok(Value) => println!("Execution Result: {:?}", Value),
-                Err(E) => eprintln!("Execution Error: {:?},\n Line: {:?}", E, P.Peek().map(|t| t.Line).unwrap_or(P.Peek().iter().len())),
-            }
+                Err(E) => eprintln!("Execution Error: {:?},\n Line: {:?}", E, Peek.unwrap_or(&Token{Kind: TokenKind::End, Line: 0, Column: 0}).Line),
+            }*/
             
             
             

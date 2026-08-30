@@ -4,6 +4,7 @@
 use ast;
 use ast::*;
 use std::collections::*;
+use std::iter::Map;
 use std::task::Context;
 use config::*;
 use lexer::*;
@@ -15,6 +16,17 @@ use elaboration::*;
 // ============================================
 
 pub type CompilerResult<T> = Result<T, CompilerError>;
+
+
+fn FormatValue(v: &Value) -> String { 
+    match v { 
+        Value::Int(n) => n.to_string(), 
+        Value::Float(f) => f.to_string(),
+        Value::Bool(b) => b.to_string(),
+        Value::String(s) => s.clone(),
+        _ => "...".to_string(),
+    } 
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum CompilerError {
@@ -39,19 +51,32 @@ impl CompilerConfig {
         }
     }
 }
+/// signature every built-in function shares: takes the runner (for state/output)
+/// and the already-evaluated arguments, returns a Value.
+pub type BuiltinFn = fn(&mut CodeRunner, &[Value]) -> CompilerResult<Value>;
+
 #[derive(Debug, Clone)]
 pub struct CodeRunner {
     Context: ExecutionContext,
     Trace: LayerTrace,
     Config: CompilerConfig,
+    /// str function name -> built-in implementation
+    Builtins: HashMap<String, BuiltinFn>,
 }
-
+pub fn AddBuiltins(Map: &mut HashMap<String, BuiltinFn>) {
+    Map.insert("print".to_string(), Builtin_Print as BuiltinFn);
+    Map.insert("println".to_string(), Builtin_Println as BuiltinFn);    
+}
 impl CodeRunner {
     pub fn New(Config: CompilerConfig) -> Self {
+        let mut Builtins: HashMap<String, BuiltinFn> = HashMap::new();
+        AddBuiltins(&mut Builtins);
+
         Self {
             Context: ExecutionContext::New(),
             Trace: LayerTrace::New(),
             Config,
+            Builtins,
         }
     }
 
@@ -64,6 +89,7 @@ impl CodeRunner {
             Expression::LiteralInt(Val) => Ok(Value::Int(*Val)),
             Expression::LiteralFloat(Val) => Ok(Value::Float(*Val)),
             Expression::LiteralBool(Val) => Ok(Value::Bool(*Val)),
+            Expression::LiteralString(Val) => Ok(Value::String(Val.clone())),
             Expression::Variable(Name) => {
                 self.Context
                     .GetVariable(Name)
@@ -73,6 +99,41 @@ impl CodeRunner {
                 let LeftVal = self.EvaluateExpression(Lhs)?;
                 let RightVal = self.EvaluateExpression(Rhs)?;
                 self.EvaluateBinaryOp(Op, LeftVal, RightVal)
+            }
+            Expression::FunctionCall { Name, Args } => {
+                // 1. Evaluate every argument in the caller's scope.
+                let mut ArgValues = Vec::with_capacity(Args.len());
+                for A in Args {
+                    ArgValues.push(self.EvaluateExpression(A)?);
+                }
+                // 2. Built-in first: if the name is in the Builtins map, run it and return.
+                if let Some(Result) = self.CallBuiltin(Name, &ArgValues) {
+                    return Result;
+                }
+
+                // 3. Otherwise resolve a user function by name, cloning so the immutable
+                //    borrow on self.Trace.Layers ends before we run &mut self.
+                let FoundFunc: Layer = self
+                    .FindFunctionByName(&self.Trace.Layers, Name)?
+                    .clone();
+
+                // 4. Push a fresh frame, bind parameters to argument values, run the body.
+                self.Context.PushFrame(Name);
+                if let LayerKind::Function { Params: DeclParams, .. } = &FoundFunc.Kind {
+                    if DeclParams.len() != ArgValues.len() {
+                        self.Context.PopFrame();
+                        return Err(CompilerError::RuntimeError(format!(
+                            "Function '{}' expected {} arg(s), got {}",
+                            Name, DeclParams.len(), ArgValues.len()
+                        )));
+                    }
+                    for (P, V) in DeclParams.iter().zip(ArgValues.into_iter()) {
+                        self.Context.SetVariable(&P.Name, V, false);
+                    }
+                }
+                let Result = self.RunBlock(&FoundFunc.Children)?;
+                self.Context.PopFrame();
+                Ok(Result)
             }
             _ => Err(CompilerError::RuntimeError("Unsupported expression".to_string())),
         }
@@ -129,6 +190,12 @@ impl CodeRunner {
                 
                 Ok(Result)
             }
+            // NOTE: LayerKind::FunctionCall is never emitted by the parser — calls arrive
+            // as Expression::FunctionCall and are handled in EvaluateExpression above.
+
+            // A bare expression statement (e.g. `add(3, 4);` or `2 + 5 * 3;`) evaluates
+            // to its value, so the top level runs as a sequence of expressions.
+            LayerKind::Expression(Expr) => self.EvaluateExpression(Expr),
 
             LayerKind::VariableBinding { Name, TypeAnnotation, IsMutable, Hooks, InitialValue } => {
                 // Evaluate initial value
@@ -285,17 +352,27 @@ impl CodeRunner {
     // ============================================
 
     pub fn RunCode(&mut self, Layers: &[Layer]) -> CompilerResult<Value> {
-        // Build trace from layers
-        self.Trace = LayerTrace::NewFrom(Layers);
-        
-        // Find main function
-//        let MainLayer = self.FindMainFunction(Layers)?;
-        
-        // Execute main
-        for Child in Layers {
-            self.RunLayer(Child)?;
+        // The driver hands us the single `Program` layer wrapped in a slice, so
+        // unwrap it to reach the real top-level items (functions, globals, calls).
+        let TopLevel: &[Layer] = match Layers {
+            [Program] if matches!(Program.Kind, LayerKind::Program) => &Program.Children,
+            other => other,
+        };
+
+        // Snapshot the top-level items so FunctionCall can resolve names later.
+        self.Trace = LayerTrace::NewFrom(TopLevel);
+
+        // Run the top level like a script: execute every item in order, but skip
+        // function *definitions* — those are only entered when they're called.
+        // No `main` is required.
+        let mut Last = Value::Unit;
+        for Item in TopLevel {
+            if matches!(Item.Kind, LayerKind::Function { .. }) {
+                continue;
+            }
+            Last = self.RunLayer(Item)?;
         }
-        Ok(Value::Unit)
+        Ok(Last)
     }
 
     fn FindMainFunction<'lifetime>(&self, Layers: &'lifetime [Layer]) -> CompilerResult<&'lifetime Layer> {
@@ -307,6 +384,19 @@ impl CodeRunner {
             }
         }
         Err(CompilerError::RuntimeError("No 'main' function found".to_string()))
+    }
+
+    //Finding any func under what name
+    fn FindFunctionByName<'lifetime>(&self,Layers: &'lifetime [Layer], FuncName: &str) -> CompilerResult<&'lifetime Layer> {
+        
+        for Layer in Layers {
+            if let LayerKind::Function { Name, .. } = &Layer.Kind {
+                if Name == FuncName {
+                    return Ok(Layer);
+                }
+            }
+        }
+        Err(CompilerError::RuntimeError(format!("No function named '{}' found", FuncName)))
     }
 
     // ============================================
@@ -332,6 +422,32 @@ impl CodeRunner {
             _ => Err(CompilerError::TypeError("Cannot infer default type".to_string())),
         }
     }
+    /// Looks the name up in the Builtins map. Returns Some(result) if it was a
+    /// built-in (handled here), or None so the caller falls through to user functions.
+    fn CallBuiltin(&mut self, Name: &str, Args: &[Value]) -> Option<CompilerResult<Value>> {
+        // Copy the fn pointer out of the map so the borrow on self.Builtins ends
+        // before we hand &mut self to the built-in.
+        let Func = self.Builtins.get(Name).copied()?;
+        Some(Func(self, Args))
+    }
+}
+
+// ============================================
+// Built-in Function Implementations
+// ============================================
+
+/// prints its arguments separated by spaces, no trailing newline
+fn Builtin_Print(_Runner: &mut CodeRunner, Args: &[Value]) -> CompilerResult<Value> {
+    let Line = Args.iter().map(FormatValue).collect::<Vec<_>>().join(" ");
+    print!("{}", Line);
+    Ok(Value::Unit)
+}
+
+/// like print, but adds a trailing newline
+fn Builtin_Println(_Runner: &mut CodeRunner, Args: &[Value]) -> CompilerResult<Value> {
+    let Line = Args.iter().map(FormatValue).collect::<Vec<_>>().join(" ");
+    println!("{}", Line);
+    Ok(Value::Unit)
 }
 
 // ============================================
@@ -396,7 +512,6 @@ impl ExecutionContext {
 
     pub fn GetVariable(&self, Name: &str) -> Option<Value> {
         // Check stack frames (LIFO order)
-        print!("GetVar {:?}",self);
         for Frame in self.Stack.iter().rev() {
             if let Some(Entry) = Frame.Variables.get(Name) {
                 return Some(Entry.Value.clone());
@@ -442,18 +557,21 @@ pub enum TraceEvent {
 #[derive(Debug, Clone, PartialEq)]
 pub struct LayerTrace {
     Events: Vec<TraceEvent>,
+    Layers: Vec<Layer>,
 }
 
 impl LayerTrace {
 
-    pub fn NewFrom(_Layers: &[Layer]) -> Self {
+    pub fn NewFrom(Layers: &[Layer]) -> Self {
         Self {
             Events: Vec::new(),
+            Layers: Layers.to_vec(),
         }
     }
     pub fn New() -> Self {
         Self {
             Events: Vec::new(),
+            Layers: Vec::new(),
         }
     }
 

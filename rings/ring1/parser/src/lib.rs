@@ -13,12 +13,14 @@ pub struct Parser {
     pub Tokens: Vec<Token>,
     /// where we are in the list
     pub Position: usize,
+    /// every token consumed by Advance, in the order it happened
+    pub History: Vec<Token>,
 }
 
 impl Parser {
     /// starts a new parser
     pub fn New(Tokens: Vec<Token>) -> Self {
-        Self { Tokens, Position: 0 }
+        Self { Tokens, Position: 0, History: Vec::new() }
     }
 
     /// main entry point to get the program layer
@@ -160,7 +162,9 @@ impl Parser {
         if !self.Check(TokenKind::CloseParen) {
             loop {
                 let (ParamName, ParamType) = self.ParseNameAndType("parameter")?;
-                Params.push(Param { Name: ParamName, Type_: ParamType });
+                let Val:Type;
+                Val = ParamType.clone();
+                Params.push(Param { Name: ParamName, Type_: ParamType, Value: Val });
                 if !self.Match(TokenKind::Comma) { break; }
             }
         }
@@ -560,14 +564,25 @@ impl Parser {
         self.Tokens.get(self.Position)
     }
 
-    /// look ahead by a specific amount
-    pub fn PeekAt(&self, Offset: usize) -> Option<&Token> {
-        self.Tokens.get(self.Position + Offset)
+    /// look ahead or behind by a specific amount. positive = ahead, 0 = current, negative = into History (-1 = most recently consumed)
+    pub fn PeekAt(&self, Offset: isize) -> Option<&Token> {
+        if Offset >= 0 {
+            self.Tokens.get(self.Position + Offset as usize)
+        } else {
+            let back = (-Offset) as usize;
+            if back == 0 || back > self.History.len() {
+                return None;
+            }
+            self.History.get(self.History.len() - back)
+        }
     }
 
-    /// pull the next token from the list
+    /// pull the next token from the list, recording it in History
     pub fn Advance(&mut self) -> Option<&Token> {
         if !self.IsAtEnd() {
+            if let Some(tok) = self.Tokens.get(self.Position) {
+                self.History.push(tok.clone());
+            }
             self.Position += 1;
         }
         self.Tokens.get(self.Position - 1)

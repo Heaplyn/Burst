@@ -56,6 +56,14 @@ pub enum LayerKind {
         IsUnsafe: bool,
         IsExtern: bool,
     },
+    /// a logic procedure with params
+    FunctionCall {
+        Name: String,
+        Params: Vec<Param>,
+        ReturnType: Option<Type>,
+        IsUnsafe: bool,
+        IsExtern: bool,
+    },
     /// binding a value to a name
     VariableBinding {
         Name: String,

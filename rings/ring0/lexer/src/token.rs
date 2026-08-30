@@ -74,4 +74,7 @@ pub enum TokenKind {
     Semicolon,
     Comma,
     Dot,
+
+    /// end of file token
+    End
 }

@@ -65,7 +65,9 @@ pub enum Expression {
     IndexAccess {
         Target: Box<Expression>,
         Index: Box<Expression>,
-    }
+    },
+    /// Invalid
+    Invalid,
 }
 
 /// function params with names and types
@@ -73,6 +75,7 @@ pub enum Expression {
 pub struct Param {
     pub Name: String,
     pub Type_: Type,
+    pub Value: Type,
 }
 
 /// struct fields with names and types
