@@ -32,12 +32,12 @@ fn RunPipeline(SourceCode: &str, Verbose: bool) {
             }
             
             println!("Verification & Compilation Successful!");
-            let mut NewRunner = CodeRunner::New({
-                CompilerConfig {},ElabCtx
-            });
+            let mut NewRunner = CodeRunner::New(CompilerConfig::New());
             println!("Running code...");
-            println!("{:?}", NewRunner);
-            NewRunner.RunCode(&Ast.Children);
+            // Use debug print if we want to print CodeRunner
+            // (Note: CodeRunner derives Debug)
+            println!("Runner initialized.");
+            let _ = NewRunner.RunCode(vec![Ast]);
             
             
             

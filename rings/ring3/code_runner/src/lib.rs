@@ -41,15 +41,15 @@ impl CompilerConfig {
 }
 #[derive(Debug, Clone)]
 pub struct CodeRunner {
-    Context: ElaborationContext,
+    Context: ExecutionContext,
     Trace: LayerTrace,
     Config: CompilerConfig,
 }
 
 impl CodeRunner {
-    pub fn New(Config: CompilerConfig,Context: ElaborationContext) -> Self {
+    pub fn New(Config: CompilerConfig) -> Self {
         Self {
-            Context,
+            Context: ExecutionContext::New(),
             Trace: LayerTrace::New(),
             Config,
         }
@@ -468,7 +468,7 @@ mod tests {
 
     #[test]
     fn test_evaluate_literal_int() {
-        let mut Runner = CodeRunner::New(CompilerConfig::default(), ElaborationContext::New());
+        let mut Runner = CodeRunner::New(CompilerConfig::default());
         let Expr = Expression::LiteralInt(42);
         let Result = Runner.EvaluateExpression(&Expr).unwrap();
         assert_eq!(Result, Value::Int(42));
@@ -476,7 +476,7 @@ mod tests {
 
     #[test]
     fn test_evaluate_binary_add() {
-        let mut Runner = CodeRunner::New(CompilerConfig::default(),ElaborationContext::New());
+        let mut Runner = CodeRunner::New(CompilerConfig::default());
         let Expr = Expression::BinaryOp {
             Op: "+".to_string(),
             Lhs: Box::new(Expression::LiteralInt(5)),

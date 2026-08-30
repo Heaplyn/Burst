@@ -1,5 +1,5 @@
 // Demonstrates the "Everything is a Layer" scoping model.
-fn main() {
+function main() {
     var x: i32 = 10;
     output_trace('OUTER', x as b8);
 

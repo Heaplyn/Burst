@@ -2,8 +2,10 @@
 #![allow(non_snake_case)]
 
 use ast::*;
-use lexer::token::{Token, TokenKind};
+use lexer::*;
+use token::{Token, TokenKind};
 
+#[derive(Debug,PartialEq)]
 /// the thing that builds our layer tree
 pub struct Parser {
     /// the list of tokens from the lexer
@@ -158,6 +160,7 @@ impl Parser {
         ).WithChildren(Body).Build())
     }
 
+    
     /// identifies what kind of logic statement we have
     pub fn ParseStatement(&mut self) -> Result<Layer, String> {
         let Tok = self.Peek().map(|t| &t.Kind);
@@ -172,7 +175,21 @@ impl Parser {
                 self.Match(TokenKind::Semicolon);
                 Ok(LayerBuilder::New(LayerKind::Unreachable, SourceLocation::Builtin()).Build())
             }
-            Some(TokenKind::Let(true|false)) => self.ParseVariableBinding(),
+            Some(TokenKind::Let(true|false)) => {
+                let mut TokenBufferPrevious = self.Peek();
+                if TokenBufferPrevious.is_none() {
+                    return Err("Unexpected end of input".to_string());
+                }
+                let mut TokenBuffer = TokenBufferPrevious.unwrap();
+
+                if (TokenBuffer.Kind == TokenKind::Let(true)) {
+                    
+                } else if (TokenBuffer.Kind == TokenKind::Let(false)) {
+                    // handle immutable let binding
+                }
+                self.ParseVariableBinding()
+            },
+            Some(TokenKind::Return) => self.ParseReturn(),
             Some(TokenKind::Havoc) => {
                 self.Advance();
                 let Expr = self.ParseExpression()?;
@@ -203,6 +220,21 @@ impl Parser {
                 }
             }
         }
+    }
+
+    /// parses return statements
+    pub fn ParseReturn(&mut self) -> Result<Layer, String> {
+        self.Advance(); // consume 'return'
+        let Value = if self.Check(TokenKind::Semicolon) {
+            None
+        } else {
+            Some(self.ParseExpression()?)
+        };
+        self.Match(TokenKind::Semicolon);
+        Ok(LayerBuilder::New(
+            LayerKind::Return { Value },
+            SourceLocation::Builtin(),
+        ).Build())
     }
 
     /// parses branching logic
@@ -252,7 +284,7 @@ impl Parser {
 
         Ok(LayerBuilder::New(LayerKind::Interrupt { Syscall }, SourceLocation::Builtin()).WithChildren(Body).Build())
     }
-
+    
     /// parses variable bindings with optional hooks
     pub fn ParseVariableBinding(&mut self) -> Result<Layer, String> {
         let is_mutable = matches!(self.Advance().map(|t| &t.Kind), Some(TokenKind::Let(true)));
@@ -278,6 +310,7 @@ impl Parser {
                 Hooks.push(VariableHook { Kind: hook_type, Body: vec![hook_layer.Kind] });
                 self.Match(TokenKind::Comma);
             }
+            println!("{:?}",self);
             self.Consume(TokenKind::CloseBrace, "Expected '}' after hooks")?;
         }
 
@@ -348,7 +381,7 @@ impl Parser {
     }
 
     /// parses atoms like numbers, strings, and idents
-    pub fn ParsePrimary(&mut self) -> Result<Expression, String> {
+    pub fn ParseAtom(&mut self) -> Result<Expression, String> {
         let Tok = self.Peek().cloned();
         match Tok.as_ref().map(|t| &t.Kind) {
             Some(TokenKind::IntLiteral(val)) => { let v = *val; self.Advance(); Ok(Expression::LiteralInt(v)) }
@@ -357,30 +390,7 @@ impl Parser {
             Some(TokenKind::Ident(name)) => {
                 let n = name.clone();
                 self.Advance();
-                let mut Expr = Expression::Variable(n.clone());
-                while let Some(TokenKind::Dot) = self.Peek().map(|t| &t.Kind) {
-                    self.Advance();
-                    let member = match self.Advance().map(|t| &t.Kind) {
-                        Some(TokenKind::Ident(m)) => m.clone(),
-                        _ => return Err("Expected member name after '.'".to_string()),
-                    };
-                    Expr = Expression::Variable(format!("{}.{}", n, member));
-                }
-                if self.Check(TokenKind::OpenParen) {
-                    self.Advance();
-                    let mut Args = Vec::new();
-                    if !self.Check(TokenKind::CloseParen) {
-                        loop {
-                            Args.push(self.ParseExpression()?);
-                            if !self.Match(TokenKind::Comma) { break; }
-                        }
-                    }
-                    self.Consume(TokenKind::CloseParen, "Expected ')' after arguments")?;
-                    let Name = if let Expression::Variable(n) = Expr { n } else { format!("{:?}", Expr) };
-                    Ok(Expression::FunctionCall { Name, Args })
-                } else {
-                    Ok(Expr)
-                }
+                Ok(Expression::Variable(n))
             }
             Some(TokenKind::BitPreciseType { Kind, Bits }) => {
                 let k = *Kind;
@@ -405,6 +415,67 @@ impl Parser {
             }
             _ => Err(format!("Unexpected token in expression: {:?}", Tok)),
         }
+    }
+
+    /// parses primary expressions with postfix operators
+    pub fn ParsePrimary(&mut self) -> Result<Expression, String> {
+        let mut Expr = self.ParseAtom()?;
+
+        loop {
+            match self.Peek().map(|t| &t.Kind) {
+                Some(TokenKind::Dot) => {
+                    self.Advance();
+                    let member = match self.Advance().map(|t| &t.Kind) {
+                        Some(TokenKind::Ident(m)) => m.clone(),
+                        _ => return Err("Expected member name after '.'".to_string()),
+                    };
+                    Expr = Expression::MemberAccess {
+                        Target: Box::new(Expr),
+                        Member: member,
+                    };
+                }
+                Some(TokenKind::OpenParen) => {
+                    self.Advance();
+                    let mut Args = Vec::new();
+                    if !self.Check(TokenKind::CloseParen) {
+                        loop {
+                            Args.push(self.ParseExpression()?);
+                            if !self.Match(TokenKind::Comma) { break; }
+                        }
+                    }
+                    self.Consume(TokenKind::CloseParen, "Expected ')' after arguments")?;
+                    let Name = match Expr {
+                        Expression::Variable(n) => n,
+                        Expression::MemberAccess { Target, Member } => {
+                            fn to_string(e: &Expression) -> Result<String, String> {
+                                match e {
+                                    Expression::Variable(n) => Ok(n.clone()),
+                                    Expression::MemberAccess { Target, Member } => {
+                                        Ok(format!("{}.{}", to_string(Target)?, Member))
+                                    }
+                                    _ => Err("Invalid function target".to_string()),
+                                }
+                            }
+                            to_string(&Expression::MemberAccess { Target: Target.clone(), Member: Member.clone() })?
+                        }
+                        _ => return Err("Expected function name before '('".to_string()),
+                    };
+                    Expr = Expression::FunctionCall { Name, Args };
+                }
+                Some(TokenKind::OpenBracket) => {
+                    self.Advance();
+                    let Index = self.ParseExpression()?;
+                    self.Consume(TokenKind::CloseBracket, "Expected ']' after index")?;
+                    Expr = Expression::IndexAccess {
+                        Target: Box::new(Expr),
+                        Index: Box::new(Index),
+                    };
+                }
+                _ => break,
+            }
+        }
+
+        Ok(Expr)
     }
 
     /// parses type names and pointer levels
@@ -503,5 +574,24 @@ mod tests {
         let ast = parser.Parse().unwrap();
         assert!(matches!(ast.Kind, LayerKind::Program));
         assert_eq!(ast.Children.len(), 1);
+    }
+
+    #[test]
+    fn test_parse_complex_expressions_and_return() {
+        let code = "function test() { return ptr[index]; }";
+        let tokens: Vec<Token> = Lexer::New(code).collect();
+        let mut parser = Parser::New(tokens);
+        let ast = parser.Parse().unwrap();
+        assert!(matches!(ast.Kind, LayerKind::Program));
+        
+        let func = &ast.Children[0];
+        assert_eq!(func.Children.len(), 1);
+        let ret_stmt = &func.Children[0];
+        assert!(matches!(ret_stmt.Kind, LayerKind::Return { .. }));
+        if let LayerKind::Return { Value: Some(expr) } = &ret_stmt.Kind {
+            assert!(matches!(expr, Expression::IndexAccess { .. }));
+        } else {
+            panic!("Expected return statement with index access expression");
+        }
     }
 }

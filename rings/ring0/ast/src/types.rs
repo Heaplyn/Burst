@@ -58,6 +58,11 @@ pub enum Expression {
     BitPreciseType {
         Kind: char,
         Bits: u32,
+    },
+    /// indexing into an array or pointer like ptr[index]
+    IndexAccess {
+        Target: Box<Expression>,
+        Index: Box<Expression>,
     }
 }
 
