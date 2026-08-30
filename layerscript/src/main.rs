@@ -40,7 +40,7 @@ fn RunPipeline(SourceCode: &str, Verbose: bool) {
             println!("Runner initialized.");
             match RunnerCode {
                 Ok(Value) => println!("Execution Result: {:?}", Value),
-                Err(E) => eprintln!("Execution Error: {:?}", E),
+                Err(E) => eprintln!("Execution Error: {:?},\n Line: {:?}", E, P.Peek().map(|t| t.Line).unwrap_or(P.Peek().iter().len())),
             }
             
             
