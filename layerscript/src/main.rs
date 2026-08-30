@@ -1,6 +1,7 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
+use ast::Layer;
 use lexer::Lexer as LexerStruct;
 use parser::Parser as ParserStruct;
 use elaboration::ElaborationContext;
@@ -17,7 +18,7 @@ fn RunPipeline(SourceCode: &str, Verbose: bool) {
     }
 
     // 2. Run the Parser
-    let mut P = ParserStruct::New(Tokens);
+    let mut P = ParserStruct::New(Tokens,Layer::New());
     match P.Parse() {
         Ok(Ast) => {
             println!("AST constructed with {} top-level items.", Ast.Children.len());
@@ -38,11 +39,13 @@ fn RunPipeline(SourceCode: &str, Verbose: bool) {
             // Use debug print if we want to print CodeRunner
             // (Note: CodeRunner derives Debug)
             let RunnerCode = NewRunner.RunCode(&[Ast]);
-            let Peek = P.PeekAt(-1);
-            /*match RunnerCode {
+            match RunnerCode {
                 Ok(Value) => println!("Execution Result: {:?}", Value),
-                Err(E) => eprintln!("Execution Error: {:?},\n Line: {:?}", E, Peek.unwrap_or(&Token{Kind: TokenKind::End, Line: 0, Column: 0}).Line),
-            }*/
+                Err(E) => {
+                    let Line = P.Tokens.last().map(|t| t.Line).unwrap_or(0);
+                    eprintln!("Execution Error: {:?},\n Line: {:?}", E, Line);
+                }
+            }
             
             
             

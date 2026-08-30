@@ -34,6 +34,8 @@ pub struct Layer {
     pub Observability: ObservabilityFlags,
     /// types defined specifically for this scope
     pub TypeStorage: TypeStorage,
+    /// variables defined specifically for this scope
+    pub VariableStorage: VariableStorage,
     /// runtime info for layertrace
     pub TraceInfo: TraceInfo,
     
@@ -185,6 +187,7 @@ impl LayerBuilder {
                     ObservableToTrace: true,
                 },
                 TypeStorage: TypeStorage::default(),
+                VariableStorage: VariableStorage::default(),
                 TraceInfo: TraceInfo {
                     TraceId: "unknown".to_string(),
                     Depth: 0,
@@ -231,6 +234,11 @@ impl Layer {
     pub fn AddType(&mut self, type_def: TypeDefinition) {
         self.TypeStorage.DefinedTypes.insert(type_def.Name.clone(), type_def);
     }
+
+    /// registers a new variable in this scope
+    pub fn AddVariable(&mut self, var_def: VariableDefinition) {
+        self.VariableStorage.Variables.insert(var_def.Name.clone(), var_def);
+    }
     
     /// checks if we are at the top level
     pub fn IsRoot(&self) -> bool {
@@ -240,5 +248,41 @@ impl Layer {
     /// adds a pomset rule between two layers
     pub fn AddDependency(&mut self, before: LayerId, after: LayerId) {
         self.Constraints.push(Constraint::POMSET { Before: before, After: after });
+    }
+    pub fn New() -> Self {
+        Self {
+            Id: LayerId {
+                Id: 0,
+            },
+            Kind: LayerKind::Program,
+            Metadata: LayerMetadata {
+                SourceLocation: SourceLocation::Builtin(),
+                Docs: None,
+                Directives: Vec::new(),
+                Optimization: OptimizationHints {
+                    AggressiveLoopFolding: false,
+                    TraceObservability: ObservabilityMode::Strict,
+                    RegisterPressure: RegisterPressureMode::Auto,
+                    InlineThreshold: None,
+                },
+                Custom: HashMap::new(),
+            },
+            Children: Vec::new(),
+            Constraints: Vec::new(),
+            Observability: ObservabilityFlags {
+                ObservableValues: Vec::new(),
+                AffectsOutput: false,
+                AffectsHardware: false,
+                ObservableToTrace: true,
+            },
+            TypeStorage: TypeStorage::default(),
+            VariableStorage: VariableStorage::default(),
+            TraceInfo: TraceInfo {
+                TraceId: "unknown".to_string(),
+                Depth: 0,
+                Context: TraceContext::Root,
+                TypeEnv: TypeStorage::default(),
+            },
+        }
     }
 }

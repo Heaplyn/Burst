@@ -10,6 +10,6 @@ function main() {
     process_score(85);
 
     // Will cause a compile error in @strict mode or a runtime panic in relaxed mode
-    process_score(120);
+    process_score(150);
 }
 main();

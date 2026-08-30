@@ -18,6 +18,8 @@ pub enum Type {
     Unit,
     /// no explicit annotation; Ring 2 infers it from the initializer
     Inferred,
+    ///Null value
+    Null,
 }
 
 /// everything we can compute or do math with
@@ -107,7 +109,7 @@ pub enum Pattern {
     /// matches a specific value
     Literal(Expression),
     /// matches and binds to a name
-    Variable(String),
+    Variable(String, Expression),
     /// matches an enum variant
     Variant(String, Option<Box<Pattern>>),
 }
@@ -140,6 +142,21 @@ pub enum HookKind {
 pub struct TypeStorage {
     pub DefinedTypes: HashMap<String, TypeDefinition>,
     pub TypeAliases: HashMap<String, Type>,
+}
+
+/// where we store variables for each layer
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct VariableStorage {
+    pub Variables: HashMap<String, VariableDefinition>,
+}
+
+/// full definition of a variable in the environment
+#[derive(Debug, Clone, PartialEq)]
+pub struct VariableDefinition {
+    pub Name: String,
+    pub TypeAnnotation: Option<Type>,
+    pub IsMutable: bool,
+    pub Value: Expression,
 }
 
 /// full definition of a user type

@@ -19,6 +19,11 @@ pub struct Lexer<'a> {
     pub CurrentColumn: usize,
 }
 
+impl Token {
+    pub fn New(Kind: TokenKind, Line: usize, Column: usize) -> Self {
+        Self { Kind, Line, Column }
+    }
+}
 impl<'a> Lexer<'a> {
     /// starts a new lexer at line 1 column 1
     pub fn New(Source: &'a str) -> Self {
@@ -42,7 +47,7 @@ impl<'a> Lexer<'a> {
         }
         Some(ch)
     }
-
+    
     /// looks at the next char without pulling it
     fn PeekChar(&mut self) -> Option<&char> {
         self.Chars.peek()

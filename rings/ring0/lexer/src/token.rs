@@ -76,5 +76,7 @@ pub enum TokenKind {
     Dot,
 
     /// end of file token
-    End
+    End,
+    ///Invalid
+    Invalid,
 }
