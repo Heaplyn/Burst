@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Complete Gameplan.md",
+                "file": "Execution Model/POMSET and Task Scheduler.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Complete Gameplan"
+              "title": "POMSET and Task Scheduler"
             }
           }
         ],
@@ -205,6 +205,23 @@
   },
   "active": "82c164887f1c7885",
   "lastOpenFiles": [
+    "Gameplan/Phase 2 - Layer Tree.md",
+    "Complete Gameplan.md",
+    "Home.md.tmp.42336.4ed5cfc6fdda",
+    "Compiler Mechanics/Codebase Reference.md",
+    "Gameplan/Phase 8 - Self-Hosting.md",
+    "Gameplan/Phase 7 - Advanced Features.md",
+    "Gameplan/Phase 6 - Tooling and Developer Experience.md",
+    "Gameplan/Phase 6 - Tooling and Developer Experience.md.tmp.42336.d2606302f14c",
+    "Gameplan/Phase 5 - Standard Library and Runtime.md",
+    "Gameplan/Phase 5 - Standard Library and Runtime.md.tmp.42336.ed4ac3cd3ee1",
+    "Gameplan/Phase 4 - Execution Engine.md",
+    "Gameplan/Phase 4 - Execution Engine.md.tmp.42336.b92acee97764",
+    "Gameplan/Phase 3 - Elaboration and Constraints.md",
+    "Gameplan/Phase 3 - Elaboration and Constraints.md.tmp.42336.b2e7eba2bc5a",
+    "Gameplan/Phase 2 - Layer Tree.md.tmp.42336.d59eb225e274",
+    "Gameplan/Phase 1 - Parser.md",
+    "Gameplan",
     "Compiler Mechanics/Parser and Lexer.md",
     "Compiler Mechanics/Codebase Navigation.md",
     "Compiler Mechanics/Type Checking and Inference.md",
@@ -221,27 +238,10 @@
     "Language Specification/Functions and Procedures.md",
     "Type System and Coercions/Type Storage and Inheritance.md",
     "Execution Model/layertrace Runtime.md",
-    "Language Specification/Variables and Hooks.md",
-    "Type System and Coercions/Coercion Guide.md",
     "Type System and Coercions",
     "Bare Metal Interfacing/havoc_register_tracking.mmd",
-    "Bare Metal Interfacing/Hardware and Havoc.md",
     "Bare Metal Interfacing",
-    "Compiler Mechanics/Compiler Implementation.md",
-    "Language Specification/Syntax and Grammar.md",
-    "Home.md",
-    "Tutorials and Examples/Standard Algorithms.md",
-    "Bare Metal/Hardware and Havoc.md",
-    "Language Specification/Base and Compound Types.md",
-    "Message 1.md",
-    "Tutorials and Examples",
-    "Language Specification",
-    "API and Standard Library",
     "Graphs/havoc_register_spill.jpg",
-    "Graphs/burst_compiler_pipeline.jpg",
-    "Bare Metal/havoc_register_tracking.mmd",
-    "Execution Model/pomset_scheduling.mmd",
-    "Compiler Mechanics/observability_boundary.mmd",
-    "Compiler Mechanics/elaboration_phase.mmd"
+    "Graphs/burst_compiler_pipeline.jpg"
   ]
 }

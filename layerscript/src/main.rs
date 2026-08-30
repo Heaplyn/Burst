@@ -36,8 +36,13 @@ fn RunPipeline(SourceCode: &str, Verbose: bool) {
             println!("Running code...");
             // Use debug print if we want to print CodeRunner
             // (Note: CodeRunner derives Debug)
+            let RunnerCode = NewRunner.RunCode(&[Ast]);
             println!("Runner initialized.");
-            let _ = NewRunner.RunCode(vec![Ast]);
+            match RunnerCode {
+                Ok(Value) => println!("Execution Result: {:?}", Value),
+                Err(E) => eprintln!("Execution Error: {:?}", E),
+            }
+            
             
             
             

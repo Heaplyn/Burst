@@ -4,6 +4,7 @@
 use ast::*;
 use lexer::*;
 use token::{Token, TokenKind};
+use std::fmt::Display;
 
 #[derive(Debug,PartialEq)]
 /// the thing that builds our layer tree
@@ -71,6 +72,24 @@ impl Parser {
 
     /// handles both "name: type" and "type name"
     pub fn ParseNameAndType(&mut self, context: &str) -> Result<(String, Type), String> {
+        if context == "variable" {
+        if let Some(TokenKind::Ident(_)) = self.Peek().map(|t| &t.Kind) {
+            let next_ends_decl = matches!(
+                self.PeekAt(1).map(|t| &t.Kind),
+                Some(TokenKind::Equal)
+                    | Some(TokenKind::Semicolon)
+                    | Some(TokenKind::OpenBrace)
+            );
+            if next_ends_decl {
+                let name = match self.Advance().map(|t| &t.Kind) {
+                    Some(TokenKind::Ident(n)) => n.clone(),
+                    _ => unreachable!(),
+                };
+                return Ok((name, Type::Inferred)); // leave `=`/`;`/`{` for the caller
+            }
+        }
+    }
+
         let mut found_type_colon = false;
         if let Some(TokenKind::Ident(_)) = self.Peek().map(|t| &t.Kind) {
             if let Some(TokenKind::Colon) = self.PeekAt(1).map(|t| &t.Kind) {
@@ -79,11 +98,19 @@ impl Parser {
                 }
             }
         }
-
+        let BeforeName = match self.Peek().map(|t| &t.Kind) {
+            Some(TokenKind::Ident(n)) => n.clone(),
+            Some(TokenKind::IntLiteral(n)) => n.to_string(),
+            Some(TokenKind::FloatLiteral(n)) => n.to_string(),
+            Some(TokenKind::StringLiteral(n)) => n.clone(),
+            Some(TokenKind::BitPreciseType { Kind, Bits }) => format!("{}{}", Kind, Bits),
+            Some(other) => format!("{:?}", other),
+            None => "EOF".to_string(),
+        };
         let (name, mut ty) = if found_type_colon {
             let n = match self.Advance().map(|t| &t.Kind) {
                 Some(TokenKind::Ident(name)) => name.clone(),
-                _ => unreachable!(),
+                _ => unreachable!()
             };
             self.Advance(); // consume ':'
             let t = self.ParseType()?;
@@ -92,7 +119,11 @@ impl Parser {
             let t = self.ParseType()?;
             let n = match self.Advance().map(|t| &t.Kind) {
                 Some(TokenKind::Ident(name)) => name.clone(),
-                _ => return Err(format!("Expected {} name after type. Found {:?}", context, self.Peek())),
+                Some(TokenKind::IntLiteral(_)) => BeforeName,
+                Some(TokenKind::FloatLiteral(_)) => BeforeName,
+                Some(TokenKind::StringLiteral(_)) => BeforeName,
+                Some(TokenKind::BitPreciseType { .. }) => BeforeName,
+                _ => return Err(format!("Expected {:?} name after type. Found {:?}", t, self.Peek())),
             };
             (n, t)
         };
@@ -310,7 +341,7 @@ impl Parser {
                 Hooks.push(VariableHook { Kind: hook_type, Body: vec![hook_layer.Kind] });
                 self.Match(TokenKind::Comma);
             }
-            println!("{:?}",self);
+            //println!("{:?}",self);
             self.Consume(TokenKind::CloseBrace, "Expected '}' after hooks")?;
         }
 
@@ -499,6 +530,18 @@ impl Parser {
                     Type::Pointer(Box::new(Type::Named(n)))
                 } else {
                     Type::Named(n)
+                }
+            }
+            Some(TokenKind::Equal) => {
+                self.Advance();
+                let Left = self.ParseType()?;
+                //self.Consume(TokenKind::Equal, "Expected '=' in type alias")?;
+                let Right = self.Peek();
+                if let Some(Token { Kind: TokenKind::Ident(_), .. }) = Right {
+                    println!("Self type: {:?}", self.ParseType()?);
+                    return Ok(self.ParseType()?);
+                } else {
+                    return Err("Expected type after '='".to_string());
                 }
             }
             _ => return Err(format!("Expected type. Found {:?}", self.Peek())),

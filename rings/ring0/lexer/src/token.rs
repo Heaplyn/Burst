@@ -13,7 +13,8 @@ pub struct Token {
 pub struct Variable<Type> {
     /// what the token actually is (var ident etc)
     pub MemoryAddress:usize,
-    Value:Type
+    Value:Type,
+    Name: String,
 }
 
 /// the different kinds of words and symbols

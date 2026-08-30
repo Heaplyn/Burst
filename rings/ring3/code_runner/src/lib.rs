@@ -289,10 +289,13 @@ impl CodeRunner {
         self.Trace = LayerTrace::NewFrom(Layers);
         
         // Find main function
-        let MainLayer = self.FindMainFunction(Layers)?;
+//        let MainLayer = self.FindMainFunction(Layers)?;
         
         // Execute main
-        self.RunLayer(MainLayer)
+        for Child in Layers {
+            self.RunLayer(Child)?;
+        }
+        Ok(Value::Unit)
     }
 
     fn FindMainFunction<'lifetime>(&self, Layers: &'lifetime [Layer]) -> CompilerResult<&'lifetime Layer> {
@@ -393,6 +396,7 @@ impl ExecutionContext {
 
     pub fn GetVariable(&self, Name: &str) -> Option<Value> {
         // Check stack frames (LIFO order)
+        print!("GetVar {:?}",self);
         for Frame in self.Stack.iter().rev() {
             if let Some(Entry) = Frame.Variables.get(Name) {
                 return Some(Entry.Value.clone());

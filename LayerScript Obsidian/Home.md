@@ -8,8 +8,16 @@
 
 Explore the technical details of the LayerScript Language:
 
-* [Complete Gameplan](Complete%20Gameplan.md)
-* [Glossary](Glossary.md) ⭐ NEW
+* [Complete Gameplan](Complete%20Gameplan.md) ⭐ UPDATED — now split into per-phase files
+    * [Phase 1 — Parser](Gameplan/Phase%201%20-%20Parser.md)
+    * [Phase 2 — Layer Tree](Gameplan/Phase%202%20-%20Layer%20Tree.md)
+    * [Phase 3 — Elaboration & Constraints](Gameplan/Phase%203%20-%20Elaboration%20and%20Constraints.md)
+    * [Phase 4 — Execution Engine](Gameplan/Phase%204%20-%20Execution%20Engine.md)
+    * [Phase 5 — Standard Library & Runtime](Gameplan/Phase%205%20-%20Standard%20Library%20and%20Runtime.md)
+    * [Phase 6 — Tooling & DX](Gameplan/Phase%206%20-%20Tooling%20and%20Developer%20Experience.md)
+    * [Phase 7 — Advanced Features](Gameplan/Phase%207%20-%20Advanced%20Features.md)
+    * [Phase 8 — Self-Hosting](Gameplan/Phase%208%20-%20Self-Hosting.md)
+* [Glossary](Glossary.md)
 
 ### 📖 Language Specification
 * [Syntax and Grammar](Language%20Specification/Syntax%20and%20Grammar.md)
@@ -31,6 +39,7 @@ Explore the technical details of the LayerScript Language:
 ### ⚙️ Compiler Mechanics
 * [Compiler Implementation](Compiler%20Mechanics/Compiler%20Implementation.md)
 * [Codebase Navigation](Compiler%20Mechanics/Codebase%20Navigation.md)
+* [Codebase Reference](Compiler%20Mechanics/Codebase%20Reference.md) ⭐ NEW — file-by-file, code-grounded
 * [Parser and Lexer](Compiler%20Mechanics/Parser%20and%20Lexer.md)
 * [Elaboration and Constraints](Compiler%20Mechanics/Elaboration%20and%20Constraints.md)
 * [Observability and Trace Folding](Compiler%20Mechanics/Observability%20and%20Trace%20Folding.md)

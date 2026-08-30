@@ -16,6 +16,8 @@ pub enum Type {
     Where(Box<Type>, Box<Expression>),
     /// unit type for when there is nothing
     Unit,
+    /// no explicit annotation; Ring 2 infers it from the initializer
+    Inferred,
 }
 
 /// everything we can compute or do math with
