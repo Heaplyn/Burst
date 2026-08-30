@@ -12,14 +12,14 @@ This is the top-level roadmap for LayerScript. It is intentionally short: it tra
 | Component | Status | Notes |
 |-----------|--------|-------|
 | **Lexer** (`ring0/lexer`) | ✅ Complete | Tokens for `function`, `var`/`let`, `havoc`, bit-precise types, literals. |
-| **AST / Layer** (`ring0/ast`) | ✅ Complete | "Everything is a Layer"; `Type` now includes `Inferred`. |
-| **Parser** (`ring1/parser`) | 🚧 ~70% | Functions, structs, typed **and inferred** bindings, refinements; full expression precedence + all statements still pending. |
+| **AST / Layer** (`ring0/ast`) | ✅ Complete | "Everything is a Layer"; `Type` includes `Inferred`; tracks `VariableStorage`. |
+| **Parser** (`ring1/parser`) | 🚧 ~85% | Handled structures, functions, precedence-climbing expressions, and statements (`if`/`while`/`return`/`havoc`). Registers scoped variables. |
 | **Elaboration** (`ring2/elaboration`) | 🚧 ~35% | Runs over the tree, basic constraint extraction; **no Z3 yet**. |
-| **Interpreter** (`ring3/code_runner`) | 🚧 Early | Walks the layer tree and executes simple programs (returns a `Value`). |
+| **Interpreter** (`ring3/code_runner`) | 🚧 ~65% | Walks the layer tree and executes programs. Supports function calls, type checks, and dynamic parameter refinements. |
 | **Codegen** | ❌ Not started | Bytecode / assembly pending. |
-| **CLI** (`ring3/command_parser` + `layerscript`) | 🚧 Working scaffold | `compile`, `eval`, `test`; `eval`/`compile` run the full pipeline. |
+| **CLI** (`ring3/command_parser` + `layerscript`) | ✅ Complete | `compile`, `eval`, `test`; runs the end-to-end pipeline with error matching. |
 
-**Reality check (verified):** `cargo run -- eval "function main() { var x = 30; let y = 3.5; var z: i32 = 7; }"` parses → elaborates → runs → prints `Execution Result: Unit`. The end-to-end pipeline is alive for trivial programs; the work now is depth.
+**Reality check (verified):** `cargo run -- compile examples/refinement.ls` successfully parses, type-checks, and executes code, dynamically catching refinement violations at runtime.
 
 ---
 
@@ -53,11 +53,11 @@ graph LR
 
 ## 🚀 Immediate Next Steps
 
-The critical path runs through the parser. See [[Phase 1 - Parser]] for the full breakdown; the first three tasks:
+The critical path runs through execution and elaboration. Current next steps:
 
-1. **Expression precedence.** Finish precedence climbing in [`rings/ring1/parser`](rings/ring1/parser/src/lib.rs) so `1 + 2 * 3`, calls, field access, and indexing all parse.
-2. **Statement coverage.** `if`/`while`/`for`/`match`/`return`/`havoc` as first-class statement layers.
-3. **Elaboration types.** Resolve `Type::Inferred` from the initializer in [`rings/ring2/elaboration`](rings/ring2/elaboration/src/lib.rs) so inferred bindings carry a concrete width downstream.
+1. **Hook execution & bodies.** Fix hook execution in `code_runner` (populate hook-body `Children`, run `on_change` pre-store and use its return, run `on_assign` post-store).
+2. **Control-flow execution.** Implement `Loop` (`While`/`For`/`Infinite`) and `Conditional` statement execution in `RunLayer` in `code_runner`.
+3. **SMT Solver Integration.** Integrate a real Z3 solver in Ring 2 `elaboration` to verify constraints statically at compile time.
 
 ---
 

@@ -28,6 +28,7 @@ pub struct Layer {
     pub Constraints: Vec<Constraint>,
     pub Observability: ObservabilityFlags,
     pub TypeStorage: TypeStorage,
+    pub VariableStorage: VariableStorage,
     pub TraceInfo: TraceInfo,
 }
 ```

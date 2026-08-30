@@ -63,11 +63,11 @@ Files: [`src/lib.rs`](../../rings/ring0/lexer/src/lib.rs), [`src/token.rs`](../.
 
 Files: [`src/lib.rs`](../../rings/ring0/ast/src/lib.rs), [`src/types.rs`](../../rings/ring0/ast/src/types.rs).
 
-- **`Layer`** — the universal node: `Id`, `Kind`, `Metadata`, `Children`, `Constraints`, `Observability`, `TypeStorage`, `TraceInfo`. See [Layer System](../Language%20Specification/Layer%20System.md).
+- **`Layer`** — the universal node: `Id`, `Kind`, `Metadata`, `Children`, `Constraints`, `Observability`, `TypeStorage`, `VariableStorage`, `TraceInfo`. See [Layer System](../Language%20Specification/Layer%20System.md).
 - **`LayerKind`** — `Program`, `Function`, `VariableBinding`, `VariableHook`, `Assignment`, `Expression`, `Block`, `Loop{Label,Kind}`, `Conditional{Condition,HasElse}`, `MatchArm{Pattern,Guard}`, `Panic`, `Unreachable`, `Havoc{Target}`, `Interrupt{Syscall}`, `Struct`, `Enum`, `Return`.
 - **`LayerBuilder`** — fluent builder (`WithDoc`, `WithChild(ren)`, `WithConstraint`, `Build`). IDs come from a process-global `LayerAddress: AtomicUsize`.
-- **`Layer` methods:** `AddType`, `IsRoot`, `AddDependency` (pushes a `Constraint::POMSET`).
-- **`types.rs`** — `Type` (`BitPrecise(char,u32)`, `Named`, `Pointer`, `Array`, `Where(Type,Expression)`, `Unit`, **`Inferred`**), `Expression` (literals, `Variable`, `BinaryOp`, `UnaryOp`, `FunctionCall`, `MemberAccess`, `IndexAccess`, `BitPreciseType`), `Param`, `StructField`, `EnumVariant`, `GenericParam`, `Pattern` (`Wildcard/Literal/Variable/Variant`), `VariableHook` + `HookKind` (`OnChange/OnRead/OnAssign/OnDrop/OnError`), `TypeStorage`/`TypeDefinition`/`TypeKind`, `SourceLocation`, `Directive`, `OptimizationHints`, `ObservabilityFlags`, `Constraint` (`RefinedType/Safety/POMSET`), `TraceInfo`/`TraceContext`.
+- **`Layer` methods:** `AddType`, `AddVariable`, `IsRoot`, `AddDependency` (pushes a `Constraint::POMSET`).
+- **`types.rs`** — `Type` (`BitPrecise(char,u32)`, `Named`, `Pointer`, `Array`, `Where(Type,Expression)`, `Unit`, **`Inferred`**), `Expression` (literals, `Variable`, `BinaryOp`, `UnaryOp`, `FunctionCall`, `MemberAccess`, `IndexAccess`, `BitPreciseType`), `Param`, `StructField`, `EnumVariant`, `GenericParam`, `Pattern` (`Wildcard/Literal/Variable/Variant`), `VariableHook` + `HookKind` (`OnChange/OnRead/OnAssign/OnDrop/OnError`), `TypeStorage`/`TypeDefinition`/`TypeKind`, `VariableStorage`/`VariableDefinition`, `SourceLocation`, `Directive`, `OptimizationHints`, `ObservabilityFlags`, `Constraint` (`RefinedType/Safety/POMSET`), `TraceInfo`/`TraceContext`.
 
 > **Known gaps:** no parent link on `Layer`; `Metadata.Custom`/`Optimization` unpopulated. See [[Phase 2 - Layer Tree]].
 
@@ -86,7 +86,7 @@ File: [`src/lib.rs`](../../rings/ring1/parser/src/lib.rs). A hand-written recurs
 - **Cursor helpers:** `Peek`, `PeekAt(n)`, `Advance`, `Check`, `Match`, `Consume`, `IsAtEnd`.
 - **Entry:** `Parse` → `Program` layer; `ParseItem` dispatches `function`/`struct`/statement.
 - **Declarations:** `ParseStruct`, `ParseFunction` (params via `ParseNameAndType`, optional `-> Type`, brace body), `ParseNameAndType` (handles `name: Type`, `Type name`, and inferred `name = …` → `Type::Inferred`, plus `where` refinements), `ParseType` (pointers, bit-precise, named, `where`).
-- **Statements:** `ParseStatement` covers `panic`, `unreachable`, `let`/`var` (→ `ParseVariableBinding`), `return`, `havoc`, `interrupt`, `if`, `while`, block, and an expression/assignment fallback. `ParseVariableBinding` also parses `{ on_change: … }` hook blocks.
+- **Statements:** `ParseStatement` covers `panic`, `unreachable`, `let`/`var` (→ `ParseVariableBinding`), `return`, `havoc`, `interrupt`, `if`, `while`, block, and an expression/assignment fallback. `ParseVariableBinding` parses `{ on_change: … }` hook blocks and registers variables into the enclosing `Layer`'s `VariableStorage`.
 - **Expressions:** `ParseExpression` → `ParseBinary(precedence)` (climbing) → `ParsePrimary` (postfix `.`, `()`, `[]`) → `ParseAtom` (literals, idents, `*deref`, parens). `TokenPrecedence` is the precedence table.
 
 > **Known gaps:** `match`/`for`/`loop`/`goto`/`enum` unparsed; only `on_change`/`on_read` hooks recognized; no unary `-`/`!`; no generics; `SourceLocation::Builtin()` used everywhere instead of real spans. See [[Phase 1 - Parser]].
@@ -110,13 +110,13 @@ File: [`src/lib.rs`](../../rings/ring2/elaboration/src/lib.rs).
 File: [`src/lib.rs`](../../rings/ring3/code_runner/src/lib.rs). The tree-walking interpreter.
 
 - **`CodeRunner { Context, Trace, Config }`** with `RunCode` → `RunLayer` recursion.
-- **`EvaluateExpression`** — `LiteralInt/Float/Bool`, `Variable` (via `ExecutionContext::GetVariable`), `BinaryOp` (through `EvaluateBinaryOp`: int `+ - * /` with divide-by-zero guard, float `+`).
+- **`EvaluateExpression`** — `LiteralInt/Float/Bool`, `Variable` (via `ExecutionContext::GetVariable`), `BinaryOp` (through `EvaluateBinaryOp`: arithmetic operators, comparison operators `< <= > >= == !=`, with divide-by-zero guard).
 - **`RunLayer`** — `Program` (run children), `Function` (`PushFrame`/`PopFrame`, `RunBlock`, `CheckType` on return), `VariableBinding` (eval init or `DefaultValue`, run hooks, `SetVariable`), `Return`. `RunBlock` stops after a `Return`.
 - **`ExecutionContext`** — global `Variables` + a `Stack` of `Frame`s; `SetVariable` writes to the top frame; `GetVariable` searches frames then globals. **`Value`**: `Unit/Int/Float/Bool/String/Array/Struct`.
 - **`CompilerError`** — `Lexer/Parser/Elaboration/Type/Runtime/Internal` variants; `CompilerResult<T>` alias.
-- Includes unit tests for literal/binary evaluation.
+- Includes unit tests for literal/binary evaluation and refinement checks.
 
-> **Known gaps / bugs:** hook bodies run with empty `Children` (so hooks are effectively no-ops); `on_assign`/`on_change` fire in reverse of the [Hooks Runtime](../Execution%20Model/Variable%20Behavior%20Hooks%20Runtime.md) spec; no `Conditional`/`Loop`/`MatchArm`/`FunctionCall` execution; `havoc` arm commented out; stray `print!("GetVar …")` in `GetVariable`; `FindMainFunction` unused. See [[Phase 4 - Execution Engine]].
+> **Known gaps / bugs:** hook bodies run with empty `Children` (so hooks are effectively no-ops); `on_assign`/`on_change` fire in reverse of the [Hooks Runtime](../Execution%20Model/Variable%20Behavior%20Hooks%20Runtime.md) spec; no `Loop`/`MatchArm` execution; `havoc` arm commented out; stray `print!("GetVar …")` in `GetVariable`; `FindMainFunction` unused. See [[Phase 4 - Execution Engine]].
 
 ---
 

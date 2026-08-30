@@ -4,7 +4,7 @@ LayerScript is a bare-metal systems language built for one thing: **speed**. We 
 
 The design comes from three ideas working together:
 
-1. **Everything is a Layer.** The whole program, every function, every variable, every hook — one universal AST node with children, metadata, constraints, and observability flags.
+1. **Everything is a Layer.** The whole program, every function, every variable, every hook — one universal AST node with children, metadata, constraints, and scope tables (`TypeStorage` and `VariableStorage`).
 2. **Refinement types with proofs.** `where` clauses lower to SMT-LIB and get discharged by a solver at compile time; proven-safe checks are **erased** from the machine code.
 3. **POMSET semantics.** Programs are a *Partially Ordered Multiset* of traces; anything outside the observability boundary can be folded, reordered, or run in parallel.
 
@@ -18,10 +18,10 @@ The compiler is a Cargo workspace of **unidirectional rings**. Lower rings never
 
 | Ring | Crate(s) | Status | Role |
 | :--- | :--- | :--- | :--- |
-| **Ring 0** | [`ast`](./rings/ring0/ast), [`lexer`](./rings/ring0/lexer), [`config`](./rings/ring0/config) | ✅ complete | Foundation: `Layer`, `Type`, `Expression`, tokens |
-| **Ring 1** | [`parser`](./rings/ring1/parser) | 🚧 ~70% | Turns tokens into recursive layer trees |
+| **Ring 0** | [`ast`](./rings/ring0/ast), [`lexer`](./rings/ring0/lexer), [`config`](./rings/ring0/config) | ✅ complete | Foundation: `Layer`, `Type`, `Expression`, `TypeStorage`, `VariableStorage` |
+| **Ring 1** | [`parser`](./rings/ring1/parser) | ✅ complete | Turns tokens into recursive layer trees & registers scoped variables |
 | **Ring 2** | [`elaboration`](./rings/ring2/elaboration) | 🚧 ~35% | Constraint extraction + SMT-LIB translation |
-| **Ring 3** | [`command_parser`](./rings/ring3/command_parser), [`code_runner`](./rings/ring3/code_runner) | 🚧 working scaffold | CLI + tree-walking interpreter |
+| **Ring 3** | [`command_parser`](./rings/ring3/command_parser), [`code_runner`](./rings/ring3/code_runner) | ✅ complete | CLI + tree-walking interpreter (with dynamic type & refinement checks) |
 | Driver | [`layerscript`](./layerscript) | ✅ wires the pipeline | `RunPipeline`: lex → parse → elaborate → run |
 
 ```mermaid
@@ -45,6 +45,7 @@ In LayerScript there is no flat list of "statements" and "expressions". Every co
 - Layers have **children** (nested code).
 - Layers carry **metadata** (source location, docs, directives, optimization hints).
 - Layers hold **logical constraints** that tell the compiler how they can be optimized.
+- Layers carry **TypeStorage** and **VariableStorage** tables keeping track of types and variable bindings defined within their lexical scope. During parsing, variables declared in a binding are registered directly onto the enclosing layer's `VariableStorage`.
 - Layers have an **observability boundary** — if nothing outside the program can see a value, the compiler is free to delete it.
 
 ### Smart mutability
@@ -64,6 +65,12 @@ Refinement types let you attach a logical predicate to a type. Given `x: u32 whe
 - Under `@silent`, an undecidable case falls back to a runtime check; under `@strict`, it's a hard error.
 
 Result: safe array indexing, non-null pointers, alignment guarantees — all with **zero runtime overhead**.
+
+### Runtime Interpreter Enforcement
+During execution in the tree-walking interpreter (`code_runner`):
+- Whenever a function is invoked, the interpreter performs a runtime check on each argument to verify it matches the parameter's base type (including bit-precise integer sizes like `u32`/`i32`).
+- The interpreter evaluates `where` refinement constraints (e.g. `score <= 100`) dynamically inside the function's call frame. If a constraint evaluates to `false`, execution immediately aborts with a runtime `TypeError`, preventing invalid execution states.
+- The interpreter fully implements comparison operators (`<`, `<=`, `>`, `>=`, `==`, `!=`) for both integers and floats to support refinement predicates.
 
 ### Variable hooks
 Reactive logic attached to a binding:
@@ -99,8 +106,8 @@ Each crate opts out with `#![allow(non_snake_case)]` / `#![allow(non_camel_case_
 cargo check
 
 # run the compiler on example programs
-cargo run -- compile examples/refinement.layerscript
-cargo run -- compile examples/variable_hooks.layerscript -O3
+cargo run -- compile examples/refinement.ls
+cargo run -- compile examples/variable_hooks.ls -O3
 
 # evaluate a snippet without a file
 cargo run -- eval "function main() { var x = 30; let y = 3.5; var z: i32 = 7; }"
@@ -109,7 +116,13 @@ cargo run -- eval "function main() { var x = 30; let y = 3.5; var z: i32 = 7; }"
 cargo run -- --help
 ```
 
-The end-to-end pipeline (lex → parse → elaborate → run) is verified for simple programs and prints `Verification & Compilation Successful!` followed by an `Execution Result`.
+The end-to-end pipeline (lex → parse → elaborate → run) is verified for simple programs and prints `Verification & Compilation Successful!` followed by the program execution output. Any runtime refinement violations are caught and printed as type errors:
+
+```text
+SCORE 85
+Execution Error: TypeError("Parameter 'score' failed refinement check in call to 'process_score'"),
+ Line: 15
+```
 
 Full CLI documentation: [CLI Reference](./LayerScript%20Obsidian/API%20and%20Standard%20Library/CLI%20Reference.md).
 
@@ -124,7 +137,7 @@ LayerScript/
 │   └── src/main.rs
 ├── rings/
 │   ├── ring0/
-│   │   ├── ast/                # Layer, Type, Expression, builders
+│   │   ├── ast/                # Layer, Type, Expression, VariableStorage, builders
 │   │   ├── lexer/              # Text → Vec<Token>
 │   │   └── config/             # global compiler settings
 │   ├── ring1/parser/           # Tokens → Layer tree
@@ -132,7 +145,7 @@ LayerScript/
 │   └── ring3/
 │       ├── command_parser/     # clap CLI: compile / eval / test
 │       └── code_runner/        # tree-walking interpreter
-├── examples/                   # *.layerscript sample programs
+├── examples/                   # *.ls sample programs
 └── LayerScript Obsidian/       # documentation vault (Obsidian)
     ├── Home.md
     ├── Complete Gameplan.md    # top-level roadmap

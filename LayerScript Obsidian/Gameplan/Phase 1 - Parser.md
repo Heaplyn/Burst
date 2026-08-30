@@ -34,8 +34,8 @@ Every later ring consumes the layer tree the parser produces. Elaboration can't 
 
 - [ ] Extend the lexer to emit `EqualEqual`, `NotEqual`, `AndAnd`, `OrOr`, `Not`, ` Amp`, `Pipe`, `Caret`, `Shl`, `Shr` (multi-char lookahead like the existing `->` / `<=` handling).
 - [ ] Add unary `-` and `!` to `ParseAtom`.
-- [ ] Complete `TokenPrecedence` to match the [Syntax and Grammar](../Language%20Specification/Syntax%20and%20Grammar.md) precedence table (14 levels).
-- [ ] Confirm function calls, `struct.field`, and `arr[idx]` postfix chains compose (already in `ParsePrimary`).
+- [x] Complete `TokenPrecedence` to match the [Syntax and Grammar](../Language%20Specification/Syntax%20and%20Grammar.md) precedence table (14 levels).
+- [x] Confirm function calls, `struct.field`, and `arr[idx]` postfix chains compose (already in `ParsePrimary`).
 
 **Design note:** keep the single precedence-climbing loop; just widen the operator/precedence tables. Represent every binary op as `Expression::BinaryOp { Op: String, .. }` for now — a later pass can intern these into the `BinaryOp` enum already declared in [`ast/src/lib.rs`](../../rings/ring0/ast/src/lib.rs).
 
@@ -43,14 +43,14 @@ Every later ring consumes the layer tree the parser produces. Elaboration can't 
 
 - [ ] `match` → `LayerKind::MatchArm` children (see [Pattern Matching](../Language%20Specification/Pattern%20Matching.md)).
 - [ ] `for` and `loop` → `LayerKind::Loop { Kind: For / Infinite }` (the `LoopKind` variants already exist).
-- [ ] Wire assignment vs. expression-statement (already handled in the `_` arm of `ParseStatement`).
-- [ ] `havoc` (done) and `panic`/`unreachable` (done) — verify semicolon handling.
+- [x] Wire assignment vs. expression-statement (already handled in the `_` arm of `ParseStatement`).
+- [x] `havoc` (done) and `panic`/`unreachable` (done) — verify semicolon handling.
 
 ## 1.3 Type parsing
 
-- [ ] Bit-precise (`i32`, `b8`, …) — done via `BitPreciseType`.
+- [x] Bit-precise (`i32`, `b8`, …) — done via `BitPreciseType`.
 - [ ] `struct` / `enum` type references — `enum` parsing still missing.
-- [ ] Refined types (`where …`) — done in `ParseNameAndType`.
+- [x] Refined types (`where …`) — done in `ParseNameAndType`.
 - [ ] Generics (`T`, `Vec<T>`) and function types (`fn(i32) -> i32`).
 
 ## 1.4 Error recovery & reporting

@@ -23,6 +23,28 @@ pub struct TypeDefinition {
 }
 ```
 
+## Variable Storage
+
+Each layer contains a `VariableStorage` that holds variable definitions declared in that scope.
+
+```rust
+pub struct VariableStorage {
+    pub Variables: HashMap<String, VariableDefinition>,
+}
+```
+
+### Variable Definitions
+A `VariableDefinition` contains the type annotations, mutability, and initial value of variables declared in the scope:
+
+```rust
+pub struct VariableDefinition {
+    pub Name: String,
+    pub TypeAnnotation: Option<Type>,
+    pub IsMutable: bool,
+    pub Value: Expression,
+}
+```
+
 ## Inheritance Rules
 
 1. **Child inherits parent types**: Types defined in an ancestor layer are visible to all descendants.

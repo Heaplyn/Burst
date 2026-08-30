@@ -29,7 +29,8 @@ Verified: `eval "function main() { var x = 30; }"` → `Execution Result: Unit`.
 ## 4.1 Interpreter (development & testing)
 
 - [ ] Execute `Conditional` (evaluate condition → run the taken branch) and `Loop` (`While`/`For`/`Infinite`).
-- [ ] Evaluate `FunctionCall`: resolve the function layer, bind args into a new `Frame`, run, return.
+- [x] Evaluate `FunctionCall`: resolve the function layer, bind args into a new `Frame`, run, return.
+- [x] Validate parameter base types and refinement constraints (`where` clauses) on function call invocation.
 - [ ] Fix hook execution: populate hook-body `Children`, run `on_change` pre-store (use its return), store, then `on_assign`.
 - [ ] Implement `havoc` and re-enable the commented arm.
 - [ ] Enter via `FindMainFunction` when present.
