@@ -152,6 +152,7 @@ dependencies = [
  "ast",
  "code_runner",
  "command_parser",
+ "config",
  "elaboration",
  "lexer",
  "parser",
@@ -172,6 +173,7 @@ name = "parser"
 version = "0.1.1"
 dependencies = [
  "ast",
+ "config",
  "lexer",
 ]
 

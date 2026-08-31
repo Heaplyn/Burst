@@ -85,7 +85,7 @@ impl Parser {
 
     /// Parses type names and pointer levels.
     pub fn ParseType(&mut self) -> Result<Type, String> {
-        println!("Parsing type: {:?}", self.Peek());
+        //println!("Parsing type: {:?}", self.Peek());
         let mut BaseType = match self.Peek().map(|t| &t.Kind) {
             Some(TokenKind::Star) => {
                 self.Advance();
@@ -118,6 +118,12 @@ impl Parser {
                     return Err("Expected type after '='".to_string());
                 }
             }
+            Some(TokenKind::And) => {
+                self.Advance();
+                let Left = self.PeekAt(-2);
+                let Inner = self.ParseType()?;
+                Type::Reference(Box::new(Inner))
+            }
             
             _ => return Err(format!("Expected type. Found {:?}", self.Peek())),
         };
@@ -125,11 +131,13 @@ impl Parser {
         let CurrentPeek = self.PeekAt(0);
         let CurrentKind = CurrentPeek.as_ref().map(|t| &t.Kind).unwrap_or(&self.Peek().as_ref().map(|t| &t.Kind).unwrap_or(&TokenKind::End));
         
-        println!("CurrentKind: {:?}", CurrentKind);
+        if config::DebugMode.load(std::sync::atomic::Ordering::Relaxed) {
+            println!("CurrentKind: {:?}", CurrentKind);
+        }
         if CurrentKind == &TokenKind::Where {
             self.Advance(); // consume 'where'
             let ConstraintExpr = self.ParseExpression().unwrap_or(Expression::Invalid);
-            println!("ConstraintExpr: {:?}", ConstraintExpr);
+            //println!("ConstraintExpr: {:?}", ConstraintExpr);
             BaseType = Type::Where(Box::new(BaseType), Box::new(ConstraintExpr.clone())); 
             if self.EvaluateExpression(&ConstraintExpr) == Ok(false) {
                 return Err("Unsatisfiable 'where' constraint".to_string());

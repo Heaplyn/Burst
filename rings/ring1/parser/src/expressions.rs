@@ -71,7 +71,7 @@ impl Parser {
     /// Get variable of name n from current Context
     pub fn GetVariable(&self, Name: &str) -> Expression {
         let Vars = &self.CurrentLayer.VariableStorage.Variables;
-        println!("vars: {:?}", Vars);
+        //println!("vars: {:?}", Vars);
         if !(Vars.contains_key(Name)) {
             return Expression::Variable("Invalid".to_string());
         }
@@ -108,6 +108,8 @@ impl Parser {
                     TokenKind::Greater => ">".to_string(),
                     TokenKind::LessEqual => "<=".to_string(),
                     TokenKind::GreaterEqual => ">=".to_string(),
+                    TokenKind::And => "&&".to_string(),
+                    TokenKind::Or => "||".to_string(),
                     TokenKind::As => "as".to_string(),
                     _ => format!("{:?}", op_tok),
                 },
@@ -122,11 +124,12 @@ impl Parser {
     /// The order-of-operations table.
     pub fn TokenPrecedence(&self, Tok: &TokenKind) -> u8 {
         match Tok {
-            TokenKind::Equal => 1,
-            TokenKind::Less | TokenKind::Greater | TokenKind::LessEqual | TokenKind::GreaterEqual => 2,
-            TokenKind::Plus | TokenKind::Minus => 3,
-            TokenKind::Star | TokenKind::Slash | TokenKind::Percent => 4,
-            TokenKind::As => 5,
+            TokenKind::Or => 2,
+            TokenKind::And => 3,
+            TokenKind::Less | TokenKind::Greater | TokenKind::LessEqual | TokenKind::GreaterEqual => 4,
+            TokenKind::Plus | TokenKind::Minus => 5,
+            TokenKind::Star | TokenKind::Slash | TokenKind::Percent => 6,
+            TokenKind::As => 7,
             _ => 0,
         }
     }

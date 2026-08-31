@@ -18,6 +18,8 @@ pub enum Type {
     Unit,
     /// no explicit annotation; Ring 2 infers it from the initializer
     Inferred,
+    /// references for borrowing values
+    Reference(Box<Type>),
     ///Null value
     Null,
 }

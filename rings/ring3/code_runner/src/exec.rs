@@ -210,6 +210,32 @@ impl CodeRunner {
                 }
             }
 
+            LayerKind::Conditional { Condition, HasElse } => {
+                let ConditionVal = self.EvaluateExpression(Condition)?;
+                
+                if ConditionVal == Value::Bool(true) {
+                    if let Some(ThenBranch) = Layer.Children.get(0) {
+                        self.RunLayer(ThenBranch)?;
+                    }
+                } else if *HasElse {
+                    if let Some(ElseBranch) = Layer.Children.get(1) {
+                        self.RunLayer(ElseBranch)?;
+                    }
+                }
+                Ok(Value::Unit)
+            }
+            LayerKind::Loop { Label, Kind } => {
+                loop {
+                    let Result = self.RunBlock(&Layer.Children)?;
+                    if let Value::Unit = Result {
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                Ok(Value::Unit)
+            }
+
             _ => Err(CompilerError::RuntimeError(format!(
                 "Unsupported layer kind: {:?}",
                 Layer.Kind

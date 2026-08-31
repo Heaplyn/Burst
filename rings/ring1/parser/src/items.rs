@@ -1,7 +1,7 @@
 //! Top-level item parsing: functions and structs.
 
 use ast::*;
-use lexer::token::TokenKind;
+use lexer::token::{Token, TokenKind};
 
 use crate::Parser;
 
@@ -38,6 +38,7 @@ impl Parser {
     /// Parses a function or procedure.
     pub fn ParseFunction(&mut self) -> Result<Layer, String> {
         self.Advance(); // consume keyword
+        
 
         let Name = match self.Advance().map(|t| &t.Kind) {
             Some(TokenKind::Ident(name)) => name.clone(),
@@ -48,27 +49,48 @@ impl Parser {
         let mut Params = Vec::new();
         if !self.Check(TokenKind::CloseParen) {
             loop {
+                if self.Match(TokenKind::Comma) {
+                    //self.Advance(); // consume the comma or 'None'
+                    continue;
+                }
                 let (ParamName, ParamType) = self.ParseNameAndType("parameter")?;
                 let Val: Type;
+                if config::DebugMode.load(std::sync::atomic::Ordering::Relaxed) {
+                    println!("Param Name: {:?}, Param Type: {:?}", ParamName, ParamType);
+                }
+                if ParamType == Type::Null {
+                    //self.Advance();
+                    continue;
+                }
                 Val = ParamType.clone();
                 Params.push(Param {
                     Name: ParamName,
                     Type_: ParamType,
                     Value: Val,
                 });
-                if !self.Match(TokenKind::Comma) {
+                //println!("Peek Inner: {:?}", self.Peek());
+                if self.Match(TokenKind::Invalid) {
+                    self.Advance();
+                    continue;
+                }
+                if self.Match(TokenKind::And) {
+                    continue;
+                }
+                if self.Match(TokenKind::CloseParen) {
                     break;
                 }
             }
         }
-        self.Consume(TokenKind::CloseParen, "Expected ')' after parameters")?;
+        
+
+        //self.Consume(TokenKind::CloseParen, "Expected ')' after parameters")?;
 
         let mut ReturnType = None;
         if let Some(TokenKind::Arrow) = self.Peek().map(|t| &t.Kind) {
             self.Advance();
             ReturnType = Some(self.ParseType()?);
         }
-
+        //println!("Return Type: {:?}", ReturnType);
         self.Consume(TokenKind::OpenBrace, "Expected '{' before function body")?;
         let mut Body = Vec::new();
         while !self.Check(TokenKind::CloseBrace) && !self.IsAtEnd() {

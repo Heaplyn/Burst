@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 ast = { path = "../../ring0/ast" }
 lexer = { path = "../../ring0/lexer" }
+config = { path = "../../ring0/config" }

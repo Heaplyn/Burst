@@ -24,6 +24,8 @@ impl ElaborationContext {
                     "<=" => "<=",
                     ">=" => ">=",
                     "as" => "as",
+                    "&&" => "and",
+                    "||" => "or",
                     _ => return Err(format!("Unsupported SMT operator: {}", Op)),
                 };
                 Ok(format!("({} {} {})", smt_op, l, r))

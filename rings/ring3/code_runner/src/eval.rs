@@ -120,6 +120,10 @@ impl CodeRunner {
             ("==", Lhs, Rhs) => Ok(Value::Bool(Lhs == Rhs)),
             ("!=", Lhs, Rhs) => Ok(Value::Bool(Lhs != Rhs)),
 
+            // Logic
+            ("&&", Value::Bool(Lhs), Value::Bool(Rhs)) => Ok(Value::Bool(Lhs && Rhs)),
+            ("||", Value::Bool(Lhs), Value::Bool(Rhs)) => Ok(Value::Bool(Lhs || Rhs)),
+
             _ => Err(CompilerError::RuntimeError(format!("Invalid binary operation: {}", Op))),
         }
     }

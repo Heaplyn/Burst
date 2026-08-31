@@ -12,6 +12,10 @@ pub struct Cli {
     #[arg(short, long, global = true)]
     pub Verbose: bool,
 
+    /// show debug prints for compiler and parser
+    #[arg(short, long, global = true)]
+    pub Debug: bool,
+
     /// specify the workspace folder
     #[arg(short, long, global = true, value_name = "DIR")]
     pub Workspace: Option<PathBuf>,

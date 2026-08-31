@@ -63,6 +63,9 @@ fn main() {
     // Parse arguments using clap
     let Args = Cli::ParseArgs();
 
+    global_config::Verbose.store(Args.Verbose, std::sync::atomic::Ordering::Relaxed);
+    global_config::DebugMode.store(Args.Debug, std::sync::atomic::Ordering::Relaxed);
+
     match &Args.Command {
         Commands::Compile { Input, OptLevel } => {
             println!("Reading source file: {:?}", Input);

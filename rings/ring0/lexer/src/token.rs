@@ -62,6 +62,8 @@ pub enum TokenKind {
     Greater,
     LessEqual,
     GreaterEqual,
+    And,
+    Or,
 
     // ===== Delimiters =====
     OpenParen,

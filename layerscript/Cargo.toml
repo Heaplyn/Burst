@@ -10,3 +10,4 @@ parser = { path = "../rings/ring1/parser" }
 elaboration = { path = "../rings/ring2/elaboration" }
 command_parser = { path = "../rings/ring3/command_parser" }
 code_runner = {path = "../rings/ring3/code_runner"}
+global_config = { package = "config", path = "../rings/ring0/config" }

@@ -121,11 +121,24 @@ impl<'a> Lexer<'a> {
             ';' => TokenKind::Semicolon,
             ',' => TokenKind::Comma,
             '.' => TokenKind::Dot,
+            '&' => {
+                if self.PeekChar() == Some(&'&') {
+                    self.AdvanceChar();
+                }
+                TokenKind::And
+            }
+            '|' => {
+                if self.PeekChar() == Some(&'|') {
+                    self.AdvanceChar();
+                }
+                TokenKind::Or
+            }
 
-            '\'' => {
+            '\'' | '"' => {
+                let quote_char = ch;
                 let mut s = String::new();
                 while let Some(&c) = self.PeekChar() {
-                    if c == '\'' {
+                    if c == quote_char {
                         self.AdvanceChar();
                         return Some(Token { Kind: TokenKind::StringLiteral(s), Line: line, Column: col });
                     }
@@ -166,6 +179,8 @@ impl<'a> Lexer<'a> {
                     "loop" => TokenKind::Loop,
                     "return" => TokenKind::Return,
                     "goto" => TokenKind::Goto,
+                    "&&" => TokenKind::And,
+                    "||" => TokenKind::Or,
                     other => {
                         if (other.starts_with('i') || other.starts_with('u') || other.starts_with('b') || other.starts_with('f'))
                             && other.len() > 1
