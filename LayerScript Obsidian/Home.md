@@ -39,7 +39,8 @@ Explore the technical details of the LayerScript Language:
 ### ⚙️ Compiler Mechanics
 * [Compiler Implementation](Compiler%20Mechanics/Compiler%20Implementation.md)
 * [Codebase Navigation](Compiler%20Mechanics/Codebase%20Navigation.md)
-* [Codebase Reference](Compiler%20Mechanics/Codebase%20Reference.md) ⭐ NEW — file-by-file, code-grounded
+* [Codebase Reference](Compiler%20Mechanics/Codebase%20Reference.md) — file-by-file, code-grounded
+* [Elaboration Pipeline](Compiler%20Mechanics/Elaboration%20Pipeline.md) ⭐ NEW — the 5-layer elaboration pass + the from-scratch solver
 * [Parser and Lexer](Compiler%20Mechanics/Parser%20and%20Lexer.md)
 * [Elaboration and Constraints](Compiler%20Mechanics/Elaboration%20and%20Constraints.md)
 * [Observability and Trace Folding](Compiler%20Mechanics/Observability%20and%20Trace%20Folding.md)

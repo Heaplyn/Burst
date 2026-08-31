@@ -4,7 +4,7 @@
 use ast::Layer;
 use lexer::Lexer as LexerStruct;
 use parser::Parser as ParserStruct;
-use elaboration::ElaborationContext;
+use elaboration::{ElaborationContext, RunAll as RunElaboration};
 use command_parser::{Cli, Commands};
 use code_runner::*;
 use lexer::token::*;
@@ -26,19 +26,38 @@ fn RunPipeline(SourceCode: &str, Verbose: bool) {
                 println!("AST Detail: {:#?}", Ast);
             }
 
-            // 3. Run Elaboration / Constraint extraction
+            // 3. Run Elaboration — the full 5-layer pipeline (see
+            //    `rings/ring2/elaboration/src/pipeline.rs`). Even on internal
+            //    errors we get an `Elaborated` back with error vectors on
+            //    `Resolved.Errors` / `Typed.Errors`; we report them, then
+            //    hand the (possibly rewritten) tree to the interpreter.
             let mut ElabCtx = ElaborationContext::New();
             if let Err(E) = ElabCtx.ElaborateLayer(&Ast) {
                 eprintln!("Elaboration Error: {}", E);
                 return;
             }
-            
+
+            let Elab = RunElaboration(&Ast);
+            for e in &Elab.Resolved.Errors {
+                eprintln!("Semantic: {:?}", e);
+            }
+            for e in &Elab.Typed.Errors {
+                eprintln!("Type:     {:?}", e);
+            }
+            if Verbose {
+                println!(
+                    "Elaboration: {} symbol(s), {} obligation(s), {} erased",
+                    Elab.Resolved.Symbols.Len(),
+                    Elab.Constraints.Obligations.len(),
+                    Elab.Erasures.Erased.len(),
+                );
+            }
+
             println!("Verification & Compilation Successful!");
             let mut NewRunner = CodeRunner::New(CompilerConfig::New());
             println!("Running code...\n\n");
-            // Use debug print if we want to print CodeRunner
-            // (Note: CodeRunner derives Debug)
-            let RunnerCode = NewRunner.RunCode(&[Ast]);
+            // Feed the *optimized* tree (post Layer 5) to the interpreter.
+            let RunnerCode = NewRunner.RunCode(&[Elab.Program]);
             match RunnerCode {
                 Ok(Value) => println!("Execution Result: {:?}", Value),
                 Err(E) => {

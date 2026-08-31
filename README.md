@@ -20,7 +20,7 @@ The compiler is a Cargo workspace of **unidirectional rings**. Lower rings never
 | :--- | :--- | :--- | :--- |
 | **Ring 0** | [`ast`](./rings/ring0/ast), [`lexer`](./rings/ring0/lexer), [`config`](./rings/ring0/config) | ✅ complete | Foundation: `Layer`, `Type`, `Expression`, `TypeStorage`, `VariableStorage` |
 | **Ring 1** | [`parser`](./rings/ring1/parser) | ✅ complete | Turns tokens into recursive layer trees & registers scoped variables |
-| **Ring 2** | [`elaboration`](./rings/ring2/elaboration) | 🚧 ~35% | Constraint extraction + SMT-LIB translation |
+| **Ring 2** | [`elaboration`](./rings/ring2/elaboration) | 🚧 ~55% | Five-layer pipeline: semantics → types → refinements → **from-scratch solver** → optimization ([Elaboration Pipeline](./LayerScript%20Obsidian/Compiler%20Mechanics/Elaboration%20Pipeline.md)) |
 | **Ring 3** | [`command_parser`](./rings/ring3/command_parser), [`code_runner`](./rings/ring3/code_runner) | ✅ complete | CLI + tree-walking interpreter (with dynamic type & refinement checks) |
 | Driver | [`layerscript`](./layerscript) | ✅ wires the pipeline | `RunPipeline`: lex → parse → elaborate → run |
 
@@ -33,6 +33,18 @@ graph TD
     P --> E[Driver: layerscript CLI]
     D --> E
 ```
+
+**Elaboration is itself a five-layer pipeline** — see [Elaboration Pipeline](./LayerScript%20Obsidian/Compiler%20Mechanics/Elaboration%20Pipeline.md):
+
+```mermaid
+graph LR
+    L1[Layer 1: Semantics] --> L2[Layer 2: Types]
+    L2 --> L3[Layer 3: Refinements]
+    L3 --> L4[Layer 4: Solver]
+    L4 --> L5[Layer 5: Optimize]
+```
+
+Layer 4 is a **from-scratch** solver — interval propagation over linear integer arithmetic plus bounded enumeration. No Z3 dependency.
 
 For a file-by-file walkthrough, see [Codebase Reference](./LayerScript%20Obsidian/Compiler%20Mechanics/Codebase%20Reference.md) in the vault.
 

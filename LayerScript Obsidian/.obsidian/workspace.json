@@ -205,6 +205,7 @@
   },
   "active": "01fdf1560275411d",
   "lastOpenFiles": [
+    "Compiler Mechanics/Elaboration Pipeline.md",
     "Gameplan/Phase 1 - Parser.md",
     "Gameplan/Phase 7 - Advanced Features.md",
     "Gameplan/Phase 8 - Self-Hosting.md",
@@ -237,7 +238,6 @@
     "Execution Model/Variable Behavior Hooks Runtime.md",
     "Type System and Coercions/Refined Types.md",
     "Language Specification/Functions and Procedures.md",
-    "Type System and Coercions/Type Storage and Inheritance.md",
     "Type System and Coercions",
     "Bare Metal Interfacing/havoc_register_tracking.mmd",
     "Bare Metal Interfacing",

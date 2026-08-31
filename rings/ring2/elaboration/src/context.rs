@@ -1,9 +1,9 @@
-//! The elaboration context and the layer-tree walk that collects constraints.
+//! The elaboration context and the layer-tree walk that collects Constraints_.
 
 use ast::{Layer, LayerKind, Type};
 use std::collections::HashSet;
 
-/// The context for analyzing layers and constraints.
+/// The context for analyzing layers and Constraints_.
 #[derive(Default, Clone, PartialEq, Debug)]
 pub struct ElaborationContext {
     /// Collected SMT assertions.
@@ -21,7 +21,7 @@ impl ElaborationContext {
         }
     }
 
-    /// Walks the layer tree and finds constraints.
+    /// Walks the layer tree and finds Constraints_.
     pub fn ElaborateLayer(&mut self, L: &Layer) -> Result<(), String> {
         match &L.Kind {
             LayerKind::Function { Name, Params, .. } => {

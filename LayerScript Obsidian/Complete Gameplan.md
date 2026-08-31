@@ -14,7 +14,7 @@ This is the top-level roadmap for LayerScript. It is intentionally short: it tra
 | **Lexer** (`ring0/lexer`) | ✅ Complete | Tokens for `function`, `var`/`let`, `havoc`, bit-precise types, literals (double/single quoted). |
 | **AST / Layer** (`ring0/ast`) | ✅ Complete | "Everything is a Layer"; `Type` includes `Inferred`; tracks `VariableStorage`. |
 | **Parser** (`ring1/parser`) | ✅ Complete | Handles structures, functions, precedence-climbing expressions (with comparisons/logical ops), and statements. |
-| **Elaboration** (`ring2/elaboration`) | 🚧 ~40% | Constraint extraction + SMT translation (now translates `!=` to `distinct`); **no Z3 yet**. |
+| **Elaboration** (`ring2/elaboration`) | 🚧 ~55% | Split into 5 explicit layers (semantics → types → refinements → **from-scratch solver** → optimization); pipeline wired end-to-end. No Z3 dependency — the solver is a pure-Rust interval-propagation + bounded-enumeration engine (see [[Elaboration Pipeline]]). |
 | **Interpreter** (`ring3/code_runner`) | 🚧 ~85% | Walks the layer tree. Supports function calls, refinement constraints, blocks, conditional branches, and nested returns. |
 | **Codegen** | ❌ Not started | Bytecode / assembly pending. |
 | **CLI** (`ring3/command_parser` + `layerscript`) | ✅ Complete | `compile`, `eval`, `test`; runs the end-to-end pipeline with error matching. |

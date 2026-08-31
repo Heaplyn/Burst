@@ -1,14 +1,23 @@
-//! Translation of LayerScript expressions into prefix SMT-LIB strings.
+//! Ring 2 · Elaboration · **Layer 4 (SMT) — SMT-LIB serialization**
+//!
+//! Keeps the *legacy* `TranslateToSmt` for external tools that want a stringy
+//! SMT-LIB view of a predicate (e.g. dropping into a real Z3 later, or for
+//! debug output). The solver itself doesn't use this — it works over the
+//! typed [`Prop`](super::normalize::Prop) representation directly.
+//!
+//! Requires: [`ast::Expression`], [`crate::context::ElaborationContext`].
 
 use ast::Expression;
 
 use crate::context::ElaborationContext;
 
 impl ElaborationContext {
-    /// Turns an expression into prefix SMT strings.
+    /// Turn an expression into a prefix SMT-LIB string.
     pub fn TranslateToSmt(&mut self, expr: &Expression) -> Result<String, String> {
         match expr {
             Expression::LiteralInt(val) => Ok(val.to_string()),
+            Expression::LiteralBool(true) => Ok("true".to_string()),
+            Expression::LiteralBool(false) => Ok("false".to_string()),
             Expression::Variable(name) => Ok(name.clone()),
             Expression::BinaryOp { Op, Lhs, Rhs } => {
                 let l = self.TranslateToSmt(Lhs)?;
@@ -24,19 +33,21 @@ impl ElaborationContext {
                     ">" => ">",
                     "<=" => "<=",
                     ">=" => ">=",
-                    "as" => "as",
                     "&&" => "and",
                     "||" => "or",
                     _ => return Err(format!("Unsupported SMT operator: {}", Op)),
                 };
                 Ok(format!("({} {} {})", smt_op, l, r))
             }
+            Expression::UnaryOp { Op, Target } if Op == "!" => {
+                Ok(format!("(not {})", self.TranslateToSmt(Target)?))
+            }
             Expression::FunctionCall { Name, Args } => {
-                let mut args_str = Vec::new();
+                let mut parts = Vec::new();
                 for a in Args {
-                    args_str.push(self.TranslateToSmt(a)?);
+                    parts.push(self.TranslateToSmt(a)?);
                 }
-                Ok(format!("({} {})", Name, args_str.join(" ")))
+                Ok(format!("({} {})", Name, parts.join(" ")))
             }
             _ => Ok(format!("{:?}", expr)),
         }

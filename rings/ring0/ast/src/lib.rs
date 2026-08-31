@@ -4,6 +4,19 @@
 
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+// Topic modules — each file names what it owns and what it requires.
+pub mod constraint;
+pub mod decl;
+pub mod expr;
+pub mod hook;
+pub mod metadata;
+pub mod pattern;
+pub mod source;
+pub mod storage;
+pub mod trace;
+pub mod ty;
+
+// Hub module (re-exports every topic module under `types`, preserving `ast::*`).
 pub mod types;
 pub use types::*;
 
