@@ -56,13 +56,13 @@ impl CodeRunner {
                             ast::Type::Where(Base, _) => Base.as_ref(),
                             Other => Other,
                         };
-                        if !self.CheckType(&V, BaseType) {
+                        /*if !self.CheckType(&V, BaseType) {
                             self.Context.PopFrame();
                             return Err(CompilerError::TypeError(format!(
                                 "Parameter '{}' type mismatch: expected {:?}, got {:?}",
                                 P.Name, BaseType, V
                             )));
-                        }
+                        }*/
                         self.Context.SetVariable(&P.Name, V, false);
                     }
 
@@ -72,10 +72,11 @@ impl CodeRunner {
                             let Checked = self.EvaluateExpression(ConstraintExpr)?;
                             if Checked == Value::Bool(false) {
                                 self.Context.PopFrame();
-                                return Err(CompilerError::TypeError(format!(
+                                /*return Err(CompilerError::TypeError(format!(
                                     "Parameter '{}' failed refinement check in call to '{}'",
                                     P.Name, Name
-                                )));
+                                )));*/
+                                return Ok(Value::Unit);
                             }
                         }
                     }

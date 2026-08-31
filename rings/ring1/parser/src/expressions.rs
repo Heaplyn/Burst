@@ -193,7 +193,14 @@ impl Parser {
                 self.Advance();
                 Ok(Expression::LiteralInt(0)) // Placeholder for unexpected ')', adjust as needed
             }
-            
+            Some(TokenKind::True) => {
+                self.Advance();
+                Ok(Expression::LiteralBool(true))
+            }
+            Some(TokenKind::False) => {
+                self.Advance();
+                Ok(Expression::LiteralBool(false))
+            }
             _ => Err(format!("Unexpected token in expression: {:?}", Tok)),
         }
     }

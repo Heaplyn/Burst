@@ -110,13 +110,28 @@ pub fn CheckReturn(Declared: &Type, Actual: &Type) -> Result<(), TypeError> {
 // ------------------------------------------------------------------
 
 fn IsBool(t: &Type) -> bool {
-    matches!(t, Type::BitPrecise('b', 1))
+    matches!(Peel(t), Type::BitPrecise('b', 1))
+}
+
+/// Peel a `Type::Where(base, _)` down to its underlying base type. Layer 2
+/// compares *structural shape* — the refinement predicate is Layer 3's job,
+/// not Layer 2's. `where` clauses on parameters would otherwise cause a
+/// spurious `Mismatch { Expected: i32, Found: Where(i32, …) }` on every call.
+///
+/// Peels transitively (handles `Where(Where(i32, P), Q)`), and is a no-op on
+/// non-`Where` types.
+fn Peel(t: &Type) -> &Type {
+    let mut cur = t;
+    while let Type::Where(inner, _) = cur {
+        cur = inner;
+    }
+    cur
 }
 
 /// Two types are the *same numeric family* (both `i`, both `u`, both `f`, or
-/// both `b`) or both `Unit`.
+/// both `b`) or both `Unit`. Ignores refinements.
 fn SameFamily(a: &Type, b: &Type) -> bool {
-    match (a, b) {
+    match (Peel(a), Peel(b)) {
         (Type::BitPrecise(ka, _), Type::BitPrecise(kb, _)) => ka == kb,
         (Type::Unit, Type::Unit) => true,
         (Type::Named(x), Type::Named(y)) => x == y,
@@ -125,13 +140,16 @@ fn SameFamily(a: &Type, b: &Type) -> bool {
 }
 
 fn TypesMatch(a: &Type, b: &Type) -> bool {
-    a == b || matches!((a, b), (Type::Inferred, _) | (_, Type::Inferred))
+    let (pa, pb) = (Peel(a), Peel(b));
+    pa == pb || matches!((pa, pb), (Type::Inferred, _) | (_, Type::Inferred))
 }
 
 /// Return the "widest" (largest bit width) of two numeric types with the same
-/// family. `None` if they aren't compatible.
+/// family. `None` if they aren't compatible. Refinements are ignored — the
+/// widened type is a bare `BitPrecise` (the caller can re-wrap in `Where` if
+/// it wants to carry a predicate forward).
 fn WidenNumeric(a: &Type, b: &Type) -> Option<Type> {
-    match (a, b) {
+    match (Peel(a), Peel(b)) {
         (Type::BitPrecise(ka, wa), Type::BitPrecise(kb, wb)) if ka == kb => {
             Some(Type::BitPrecise(*ka, (*wa).max(*wb)))
         }

@@ -40,7 +40,7 @@ Files under [`rings/ring2/elaboration/src/layer1_semantics/`](../../rings/ring2/
 | `resolve.rs`   | `Resolve(&Layer) -> ResolvedProgram` walker |
 | `errors.rs`    | `SemanticError` (undefined / duplicate / shadow denied) |
 
-Walks the AST, opens a fresh scope at each function/block, interns each declaration as a `Symbol`, and checks every `Expression::Variable` reference. Seeds the root scope with built-in names (`print`, `println`, …) so calls to them aren't flagged undefined.
+Walks the AST, opens a fresh scope at each function/block, interns each declaration as a `Symbol`, and checks every `Expression::Variable` reference. Seeds the root scope with built-in names (`print`, `println`, `type`) so calls to them aren't flagged undefined.
 
 ## Layer 2 — Types
 

@@ -22,7 +22,7 @@ Bit vectors represent raw, uninterpreted hardware register bits. They are parame
   - Bitwise Not: `~`
   - Bitwise And/Or/Xor: `&`, `|`, `^`
   - Bitwise Shift Left/Right: `<<`, `>>`
-* **Boolean Equivalence**: `b1` is the native boolean type. The values `1 as b1` and `0 as b1` alias to the keywords `true` and `false`.
+* **Boolean Equivalence**: `b1` is the native boolean type. The keywords `true` and `false` are first-class boolean literal expressions of type `b1` in the AST.
 * **Casting**: Can be explicitly cast (`as`) to numeric integer types when arithmetic is required:
   ```layerscript
   var raw_port_bits: b16 = read_port();

@@ -84,6 +84,7 @@ During execution in the tree-walking interpreter (`code_runner`):
 - The interpreter evaluates `where` refinement constraints dynamically inside the function's call frame. If a constraint evaluates to `false`, execution immediately aborts with a runtime `TypeError`.
 - The interpreter fully implements comparison operators (`<`, `<=`, `>`, `>=`, `==`, `!=`) and logical operators (`&&`, `||`) to support refinement predicates.
 - The interpreter supports nested block scopes (`{ ... }` / `LayerKind::Block`) and handles nested `return` propagation cleanly across blocks and conditionals via a global return state tracking system.
+- The interpreter supports built-in functions such as `type(arg)`, which returns the string representation of any value's runtime type (e.g., `"int"`, `"float"`, `"bool"`, `"string"`, `"unit"`).
 
 ### Variable hooks
 Reactive logic attached to a binding:

@@ -10,9 +10,11 @@ function verify_bounds(val: u32 where val >= 100 && val <= 500 && val != 300) ->
     return val;
 }
 
-function stress(x: u32 where x > 10 && x < 1000) -> u32 {
+function stress(x: u32 where x > 10 && x < 1000 or false) -> u32 {
     println('Starting stress test with input', x);
-    
+    if (x == false) {
+        return 0;
+    }
     let a: u32 where a > x = x + 1;
     let b: u32 where b > a = a + 5;
     let c: u32 where c > b = b * 2;
@@ -32,3 +34,6 @@ function stress(x: u32 where x > 10 && x < 1000) -> u32 {
 }
 
 stress(120);
+println(type(600));
+println(type(true));
+println(type('hello'));

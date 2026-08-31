@@ -1,5 +1,7 @@
 //! Parsing of types and the shared "name + type" declaration form.
 
+use std::mem::take;
+
 use ast::*;
 use lexer::token::{Token, TokenKind};
 
@@ -46,8 +48,10 @@ impl Parser {
                 Some(TokenKind::Ident(name)) => name.clone(),
                 _ => unreachable!(),
             };
-            self.Advance(); // consume ':'
+            self.Advance(); // consume ':''
+            println!("Parsing type after ':'");
             let t = self.ParseType()?;
+            
             (n, t)
         } else {
             let t = self.ParseType()?;
@@ -69,15 +73,13 @@ impl Parser {
         {
             self.Advance(); // consume ':'
             self.Advance(); // consume 'where'
+            
             true
         } else {
             false
         };
 
-        if has_refinement {
-            let ConstraintExpr = self.ParseExpression()?;
-            ty = Type::Where(Box::new(ty), Box::new(ConstraintExpr));
-        }
+        
 
         Ok((name, ty))
     }
@@ -121,6 +123,7 @@ impl Parser {
             Some(TokenKind::And) => {
                 self.Advance();
                 let Left = self.PeekAt(-2);
+                println!("And after");
                 let Inner = self.ParseType()?;
                 Type::Reference(Box::new(Inner))
             }
@@ -128,7 +131,8 @@ impl Parser {
                 self.Advance();
                 let ReturnType = self.ParseType()?;
                 ReturnType
-            }
+            } 
+
             
             _ => return Err(format!("Expected type. Found {:?}\nLine:{:?}", self.Peek(), self.Peek().map(|t| t.Line))),
         };
@@ -141,9 +145,26 @@ impl Parser {
         }
         if CurrentKind == &TokenKind::Where {
             self.Advance(); // consume 'where'
-            let ConstraintExpr = self.ParseExpression().unwrap_or(Expression::Invalid);
-            //println!("ConstraintExpr: {:?}", ConstraintExpr);
-            BaseType = Type::Where(Box::new(BaseType), Box::new(ConstraintExpr.clone())); 
+
+            // Parse the first predicate. Then, as long as we see `or`,
+            // consume it and parse another predicate, combining them into a
+            // left-associative disjunction — `where P or Q or R` becomes
+            // the syntax tree of `(P || Q) || R`, which SMT/eval both handle.
+            let mut ConstraintExpr = self.ParseExpression().unwrap_or(Expression::Invalid);
+            while matches!(self.Peek().map(|t| &t.Kind), Some(TokenKind::WhereOr)) {
+                self.Advance(); // consume 'or'
+                let Rhs = self.ParseExpression().unwrap_or(Expression::Invalid);
+                ConstraintExpr = Expression::BinaryOp {
+                    Op: "||".to_string(),
+                    Lhs: Box::new(ConstraintExpr),
+                    Rhs: Box::new(Rhs),
+                };
+            }
+
+            BaseType = Type::Where(Box::new(BaseType), Box::new(ConstraintExpr.clone()));
+
+            // Cheap static check — if the whole predicate obviously evaluates
+            // to `false` at parse time (constant-only expression), reject.
             if self.EvaluateExpression(&ConstraintExpr) == Ok(false) {
                 return Err("Unsatisfiable 'where' constraint".to_string());
             }

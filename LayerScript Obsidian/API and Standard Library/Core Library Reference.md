@@ -15,6 +15,14 @@ this is automatically imported. it sets up the basic aliases so you don't have t
 | `usize` | `u64` | pointer-sized unsigned integer |
 | `bool` | `b1` | true/false bits |
 
+### Built-in Functions
+
+The following functions are globally available in the prelude without requiring any namespace prefix:
+
+* `print(args...)`: Prints arguments to stdout separated by spaces, with no trailing newline.
+* `println(args...)`: Like `print`, but appends a trailing newline.
+* `type(value) -> String`: Returns a string representation of the runtime value's type (e.g. `"int"`, `"float"`, `"bool"`, `"string"`, `"unit"`, `"array"`, or `"struct"`).
+
 ---
 
 ## 2. core math (`core::math`)

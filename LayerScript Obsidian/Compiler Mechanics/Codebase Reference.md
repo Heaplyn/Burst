@@ -51,7 +51,7 @@ Files: [`src/lib.rs`](../../rings/ring0/lexer/src/lib.rs), [`src/token.rs`](../.
 
 - **`Lexer<'a>`** — wraps `Peekable<Chars>` and tracks `CurrentLine`/`CurrentColumn`. `New`, `NextToken`, `PeekToken` (one-token buffer via `PeekedToken`), and an `Iterator` impl so the driver can `.collect()` tokens.
 - **`NextToken`** recognizes: arithmetic/compare operators, delimiters, `//` line comments (recurses to skip), `'…'` **single-quote string literals**, identifiers/keywords, bit-precise type words, and int/float literals.
-- **Keyword mapping:** `function`/`fn`→`Function`, `var`→`Let(true)`, `let`→`Let(false)`, plus `mut where havoc interrupt unreachable panic as match struct enum if else while for loop return goto`.
+- **Keyword mapping:** `function`/`fn`→`Function`, `var`→`Let(true)`, `let`→`Let(false)`, `true`→`True`, `false`→`False`, plus `mut where havoc interrupt unreachable panic as match struct enum if else while for loop return goto`.
 - **Bit-precise detection:** an identifier like `i32`/`u8`/`b16`/`f64` (leading `i/u/b/f` + all digits) becomes `BitPreciseType { Kind, Bits }`.
 - **`token.rs`** defines `Token { Kind, Line, Column }` and the `TokenKind` enum (keywords, `Ident`, `IntLiteral`, `FloatLiteral`, `StringLiteral`, `BitPreciseType`, operators, delimiters). Note `Let(bool)` encodes mutability at the token level.
 

@@ -33,6 +33,11 @@ pub enum TokenKind {
     Unreachable,
     Panic,
     Where,
+    /// `or` — appears only after a `where` predicate; joins alternative
+    /// refinements as a disjunction (`where P or Q` ⇒ `P || Q`).
+    /// Unit variant: the lexer has nothing to attach at emit time; the
+    /// parser gathers the right-hand predicate from the following tokens.
+    WhereOr,
     As,
     Match,
     If,
@@ -48,6 +53,8 @@ pub enum TokenKind {
     FloatLiteral(f64),
     StringLiteral(String),
     BitPreciseType { Kind: char, Bits: u32 },
+    True,
+    False,
     
     // ===== Operators & Symbols =====
     Plus,

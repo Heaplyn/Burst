@@ -44,7 +44,7 @@ pub struct ResolvedProgram {
 /// crates share one source of truth.
 pub fn Resolve(Root: &Layer) -> ResolvedProgram {
     let mut r = Resolver::New();
-    r.SeedBuiltins(&["print", "println"]);
+    r.SeedBuiltins();
     r.WalkLayer(Root);
     ResolvedProgram { Symbols: r.symbols, Errors: r.errors }
 }
@@ -70,15 +70,25 @@ impl Resolver {
 
     /// Declare a list of built-in function names in the root scope so that
     /// references to them from user code resolve rather than error.
-    fn SeedBuiltins(&mut self, Names: &[&str]) {
-        for n in Names {
-            self.DeclareSymbol(
-                n,
-                SymbolKind::Function,
-                Some(ast::Type::Unit), // return type is (); overriden if we type them properly later
-                SourceLocation::Builtin(),
-            );
-        }
+    fn SeedBuiltins(&mut self) {
+        self.DeclareSymbol(
+            "print",
+            SymbolKind::Function,
+            Some(ast::Type::Unit),
+            SourceLocation::Builtin(),
+        );
+        self.DeclareSymbol(
+            "println",
+            SymbolKind::Function,
+            Some(ast::Type::Unit),
+            SourceLocation::Builtin(),
+        );
+        self.DeclareSymbol(
+            "type",
+            SymbolKind::Function,
+            Some(ast::Type::Named("String".to_string())),
+            SourceLocation::Builtin(),
+        );
     }
 
     /// Walks one layer. Dispatches on `LayerKind` — declarations get interned
