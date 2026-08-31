@@ -28,7 +28,7 @@ impl ElaborationContext {
                 println!("Elaborating function: {}", Name);
                 for p in Params {
                     self.KnownVars.insert(p.Name.clone());
-                    if let Type::Where(_base, constraint) = &p.Type_ {
+                    if let Type::Where(_base, constraint, _) = &p.Type_ {
                         let smt = self.TranslateToSmt(constraint)?;
                         self.Constraints.push(format!("(assert {})", smt));
                     }
@@ -36,8 +36,8 @@ impl ElaborationContext {
             }
             LayerKind::VariableBinding { Name, TypeAnnotation, .. } => {
                 self.KnownVars.insert(Name.clone());
-                println!("TypeAnnotation for {}: {:?}", Name, TypeAnnotation);
-                if let Some(Type::Where(_, constraint)) = TypeAnnotation {
+                //println!("TypeAnnotation for {}: {:?}", Name, TypeAnnotation);
+                if let Some(Type::Where(_, constraint, _)) = TypeAnnotation {
                     let smt = self.TranslateToSmt(constraint)?;
                     self.Constraints.push(format!("(assert {})", smt));
                 }

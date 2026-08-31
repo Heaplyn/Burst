@@ -21,7 +21,11 @@ impl CodeRunner {
                 self.Context.PushFrame(Name);
                 for Param in Params {
                     match &Param.Type_ {
-                        Type::Where(Type_,Expr ) => {
+                        // Third field (fallback) is ignored here because
+                        // parameters don't have a value at declaration time —
+                        // arguments are checked at the call site in `eval.rs`
+                        // where the fallback is actually applied.
+                        Type::Where(Type_, Expr, _) => {
                             let Return = self.EvaluateExpression(Expr)?;
                             if !self.CheckType(&Return, Type_) {
                                 return Err(CompilerError::TypeError(format!(
@@ -37,12 +41,10 @@ impl CodeRunner {
                                 )));
                             }
                             self.Context.DeclareVariable(&Param.Name, Type_)?;
-                        
-                        },
-                        _ => return Err(CompilerError::TypeError(format!(
-                            "Parameter '{}' missing type annotation",
-                            Param.Name
-                        ))),
+                        }
+                        other => {
+                            self.Context.DeclareVariable(&Param.Name, other)?;
+                        }
                     }
                     }
                     
@@ -84,6 +86,27 @@ impl CodeRunner {
                     // Use default value based on type
                     self.DefaultValue(TypeAnnotation)?
                 };
+
+                // Refinement + `else` fallback:
+                //   `val: u32 where val >= 10 && val <= 1000 else 0`
+                // Bind the candidate value under `Name` (so the predicate can
+                // reference it), evaluate the predicate. If it's false and we
+                // have a fallback, evaluate the fallback and use *that* as the
+                // stored value. If no fallback and the predicate fails, error.
+                if let Some(Type::Where(_Base, Predicate, Fallback)) = TypeAnnotation {
+                    self.Context.SetVariable(Name, Value.clone(), *IsMutable);
+                    let PredResult = self.EvaluateExpression(Predicate)?;
+                    if PredResult == Value::Bool(false) {
+                        if let Some(FbExpr) = Fallback {
+                            Value = self.EvaluateExpression(FbExpr)?;
+                        } else {
+                            return Err(CompilerError::TypeError(format!(
+                                "Variable '{}' failed refinement check with no `else` fallback",
+                                Name
+                            )));
+                        }
+                    }
+                }
 
                 // Run on_assign hooks
                 for Hook in Hooks {

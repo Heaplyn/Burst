@@ -122,7 +122,7 @@ fn IsBool(t: &Type) -> bool {
 /// non-`Where` types.
 fn Peel(t: &Type) -> &Type {
     let mut cur = t;
-    while let Type::Where(inner, _) = cur {
+    while let Type::Where(inner, _, _) = cur {
         cur = inner;
     }
     cur

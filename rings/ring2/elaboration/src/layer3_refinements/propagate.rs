@@ -63,7 +63,7 @@ fn Walk(L: &Layer, stack: &mut AssumptionStack, g: &mut ConstraintGraph) {
         LayerKind::Function { Params, .. } => {
             stack.EnterFrame();
             for p in Params {
-                if let Type::Where(_base, cond) = &p.Type_ {
+                if let Type::Where(_base, cond, _) = &p.Type_ {
                     stack.PushAssumption((**cond).clone());
                 }
             }
@@ -75,7 +75,7 @@ fn Walk(L: &Layer, stack: &mut AssumptionStack, g: &mut ConstraintGraph) {
 
         // Variable binding with a refined type: push the constraint too.
         LayerKind::VariableBinding { TypeAnnotation, .. } => {
-            if let Some(Type::Where(_, cond)) = TypeAnnotation {
+            if let Some(Type::Where(_, cond, _)) = TypeAnnotation {
                 stack.PushAssumption((**cond).clone());
                 // We don't pop — the binding is in scope until the enclosing
                 // block ends, and blocks manage their own frames.

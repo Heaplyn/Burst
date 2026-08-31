@@ -53,7 +53,7 @@ impl CodeRunner {
                     }
                     for (P, V) in DeclParams.iter().zip(ArgValues.into_iter()) {
                         let BaseType = match &P.Type_ {
-                            ast::Type::Where(Base, _) => Base.as_ref(),
+                            ast::Type::Where(Base, _, _) => Base.as_ref(),
                             Other => Other,
                         };
                         //Dont need this cause we now support diff type in where or statement
@@ -67,16 +67,23 @@ impl CodeRunner {
                         self.Context.SetVariable(&P.Name, V, false);
                     }
 
-                    // Validate refinement constraints
+                    // Validate refinement constraints, applying any `else`
+                    // fallback when the predicate fails.
                     for P in DeclParams {
-                        if let ast::Type::Where(_, ConstraintExpr) = &P.Type_ {
+                        if let ast::Type::Where(_, ConstraintExpr, Fallback) = &P.Type_ {
                             let Checked = self.EvaluateExpression(ConstraintExpr)?;
                             if Checked == Value::Bool(false) {
+                                // `where P else V` — evaluate the fallback and
+                                // rebind the parameter to that value instead of
+                                // failing.
+                                if let Some(FbExpr) = Fallback {
+                                    let FbVal = self.EvaluateExpression(FbExpr)?;
+                                    self.Context.SetVariable(&P.Name, FbVal, false);
+                                    continue;
+                                }
+                                // No fallback: silently no-op the call (existing
+                                // behavior).
                                 self.Context.PopFrame();
-                                /*return Err(CompilerError::TypeError(format!(
-                                    "Parameter '{}' failed refinement check in call to '{}'",
-                                    P.Name, Name
-                                )));*/
                                 return Ok(Value::Unit);
                             }
                         }

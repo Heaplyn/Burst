@@ -40,9 +40,12 @@ impl Parser {
         self.Advance(); // consume keyword
         
 
-        let Name = match self.Advance().map(|t| &t.Kind) {
-            Some(TokenKind::Ident(name)) => name.clone(),
-            _ => return Err("Expected function name".to_string()),
+        let Name = if let Some(TokenKind::Ident(name)) = self.Peek().map(|t| &t.Kind) {
+            let n = name.clone();
+            self.Advance();
+            n
+        } else {
+            "".to_string()
         };
 
         self.Consume(TokenKind::OpenParen, "Expected '(' after function name")?;
@@ -79,6 +82,8 @@ impl Parser {
                     break;
                 }
             }
+        } else {
+            self.Consume(TokenKind::CloseParen, "Expected ')' after parameters")?;
         }
         
 

@@ -18,7 +18,16 @@ pub enum Type {
     /// Arrays for holding a bunch of things.
     Array(Box<Type>, usize),
     /// Refinements for SMT checks like `x < 10`.
-    Where(Box<Type>, Box<Expression>),
+    ///
+    /// Third field is an optional **`else` fallback**: if the predicate
+    /// evaluates to `false` at runtime for the bound value, the fallback
+    /// expression is evaluated and used instead of failing. `None` means
+    /// "no fallback — a violation is an error".
+    ///
+    /// Syntax:
+    ///   `val: u32 where val >= 10 && val <= 1000`         → fallback = None
+    ///   `val: u32 where val >= 10 && val <= 1000 else 0`  → fallback = Some(0)
+    Where(Box<Type>, Box<Expression>, Option<Box<Expression>>),
     /// Unit type — no value.
     Unit,
     /// No explicit annotation; Ring 2 infers it from the initializer.

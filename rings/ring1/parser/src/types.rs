@@ -146,27 +146,33 @@ impl Parser {
         if CurrentKind == &TokenKind::Where {
             self.Advance(); // consume 'where'
 
-            // Parse the first predicate. Then, as long as we see `or`,
-            // consume it and parse another predicate, combining them into a
-            // left-associative disjunction — `where P or Q or R` becomes
-            // the syntax tree of `(P || Q) || R`, which SMT/eval both handle.
-            let mut ConstraintExpr = self.ParseExpression().unwrap_or(Expression::Invalid);
-            while matches!(self.Peek().map(|t| &t.Kind), Some(TokenKind::WhereOr)) {
-                self.Advance(); // consume 'or'
-                let Rhs = self.ParseExpression().unwrap_or(Expression::Invalid);
-                ConstraintExpr = Expression::BinaryOp {
-                    Op: "||".to_string(),
-                    Lhs: Box::new(ConstraintExpr),
-                    Rhs: Box::new(Rhs),
-                };
-            }
+            // Parse the refinement predicate.
+            let ConstraintExpr = self.ParseExpression().unwrap_or(Expression::Invalid);
 
-            BaseType = Type::Where(Box::new(BaseType), Box::new(ConstraintExpr.clone()));
+            // Optional `else <expr>` — fallback value used when the bound
+            // value fails the predicate at runtime. `where P else V`
+            // becomes `Type::Where(base, P, Some(V))`; no `else` clause
+            // gives `Type::Where(base, P, None)` (violation is an error).
+            let Fallback = if matches!(self.Peek().map(|t| &t.Kind), Some(TokenKind::Else)) {
+                self.Advance(); // consume 'else'
+                Some(Box::new(self.ParseExpression().unwrap_or(Expression::Invalid)))
+            } else {
+                None
+            };
+
+            BaseType = Type::Where(
+                Box::new(BaseType),
+                Box::new(ConstraintExpr.clone()),
+                Fallback,
+            );
 
             // Cheap static check — if the whole predicate obviously evaluates
-            // to `false` at parse time (constant-only expression), reject.
-            if self.EvaluateExpression(&ConstraintExpr) == Ok(false) {
-                return Err("Unsatisfiable 'where' constraint".to_string());
+            // to `false` at parse time AND there's no fallback, reject.
+            // With a fallback, the value is always usable, so don't error.
+            if let Type::Where(_, _, None) = &BaseType {
+                if self.EvaluateExpression(&ConstraintExpr) == Ok(false) {
+                    return Err("Unsatisfiable 'where' constraint".to_string());
+                }
             }
         }
 

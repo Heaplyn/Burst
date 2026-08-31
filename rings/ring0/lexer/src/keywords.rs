@@ -15,7 +15,6 @@ pub fn LookupKeyword(word: &str) -> Option<TokenKind> {
         "let" => TokenKind::Let(false),
         "mut" => TokenKind::Mut,
         "where" => TokenKind::Where,
-        "or" => TokenKind::WhereOr,
         "havoc" => TokenKind::Havoc,
         "interrupt" => TokenKind::Interrupt,
         "unreachable" => TokenKind::Unreachable,
