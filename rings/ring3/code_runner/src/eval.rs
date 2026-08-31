@@ -56,6 +56,7 @@ impl CodeRunner {
                             ast::Type::Where(Base, _) => Base.as_ref(),
                             Other => Other,
                         };
+                        //Dont need this cause we now support diff type in where or statement
                         /*if !self.CheckType(&V, BaseType) {
                             self.Context.PopFrame();
                             return Err(CompilerError::TypeError(format!(
