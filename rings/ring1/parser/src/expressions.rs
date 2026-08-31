@@ -86,6 +86,9 @@ impl Parser {
 
     /// Handles operator precedence for math and logic (precedence climbing).
     pub fn ParseBinary(&mut self, Precedence: u8) -> Result<Expression, String> {
+        if config::DebugMode.load(std::sync::atomic::Ordering::Relaxed) {
+            println!("Self: {:?}", self.Peek());
+        }
         let mut Expr = self.ParsePrimary()?;
 
         while let Some(tok) = self.Peek().map(|t| &t.Kind) {
@@ -172,6 +175,7 @@ impl Parser {
                 }
             }
             Some(TokenKind::Star) => {
+                
                 self.Advance();
                 let Target = self.ParsePrimary()?;
                 Ok(Expression::UnaryOp {
@@ -185,6 +189,11 @@ impl Parser {
                 self.Consume(TokenKind::CloseParen, "Expected ')'")?;
                 Ok(Expr)
             }
+            Some(TokenKind::CloseParen) => {
+                self.Advance();
+                Ok(Expression::LiteralInt(0)) // Placeholder for unexpected ')', adjust as needed
+            }
+            
             _ => Err(format!("Unexpected token in expression: {:?}", Tok)),
         }
     }

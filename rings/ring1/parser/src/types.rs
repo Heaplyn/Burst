@@ -124,8 +124,13 @@ impl Parser {
                 let Inner = self.ParseType()?;
                 Type::Reference(Box::new(Inner))
             }
+            Some(TokenKind::Arrow) => {
+                self.Advance();
+                let ReturnType = self.ParseType()?;
+                ReturnType
+            }
             
-            _ => return Err(format!("Expected type. Found {:?}", self.Peek())),
+            _ => return Err(format!("Expected type. Found {:?}\nLine:{:?}", self.Peek(), self.Peek().map(|t| t.Line))),
         };
         
         let CurrentPeek = self.PeekAt(0);

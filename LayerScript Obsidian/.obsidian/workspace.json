@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "API and Standard Library/Built-in Types Reference.md",
+                "file": "Compiler Mechanics/Codebase Navigation.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Built-in Types Reference"
+              "title": "Codebase Navigation"
             }
           }
         ],
@@ -203,15 +203,17 @@
       "bases:Create new base": false
     }
   },
-  "active": "82c164887f1c7885",
+  "active": "01fdf1560275411d",
   "lastOpenFiles": [
+    "Gameplan/Phase 1 - Parser.md",
+    "Gameplan/Phase 7 - Advanced Features.md",
+    "Gameplan/Phase 8 - Self-Hosting.md",
+    "API and Standard Library/Built-in Types Reference.md",
     "Execution Model/POMSET and Task Scheduler.md",
     "Gameplan/Phase 2 - Layer Tree.md",
     "Complete Gameplan.md",
     "Home.md.tmp.42336.4ed5cfc6fdda",
     "Compiler Mechanics/Codebase Reference.md",
-    "Gameplan/Phase 8 - Self-Hosting.md",
-    "Gameplan/Phase 7 - Advanced Features.md",
     "Gameplan/Phase 6 - Tooling and Developer Experience.md",
     "Gameplan/Phase 6 - Tooling and Developer Experience.md.tmp.42336.d2606302f14c",
     "Gameplan/Phase 5 - Standard Library and Runtime.md",
@@ -221,14 +223,12 @@
     "Gameplan/Phase 3 - Elaboration and Constraints.md",
     "Gameplan/Phase 3 - Elaboration and Constraints.md.tmp.42336.b2e7eba2bc5a",
     "Gameplan/Phase 2 - Layer Tree.md.tmp.42336.d59eb225e274",
-    "Gameplan/Phase 1 - Parser.md",
     "Gameplan",
     "Compiler Mechanics/Parser and Lexer.md",
     "Compiler Mechanics/Codebase Navigation.md",
     "Compiler Mechanics/Type Checking and Inference.md",
     "Language Specification/Layer System.md",
     "API and Standard Library/Core Library Reference.md",
-    "API and Standard Library/Built-in Types Reference.md",
     "Compiler Mechanics/Elaboration and Constraints.md",
     "Language Specification/First-Class Types and Generics.md",
     "Tutorials and Examples/Layer System Examples.md",

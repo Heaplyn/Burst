@@ -68,7 +68,6 @@ impl Parser {
                     Type_: ParamType,
                     Value: Val,
                 });
-                //println!("Peek Inner: {:?}", self.Peek());
                 if self.Match(TokenKind::Invalid) {
                     self.Advance();
                     continue;
