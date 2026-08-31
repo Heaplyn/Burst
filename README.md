@@ -69,8 +69,9 @@ Result: safe array indexing, non-null pointers, alignment guarantees — all wit
 ### Runtime Interpreter Enforcement
 During execution in the tree-walking interpreter (`code_runner`):
 - Whenever a function is invoked, the interpreter performs a runtime check on each argument to verify it matches the parameter's base type (including bit-precise integer sizes like `u32`/`i32`).
-- The interpreter evaluates `where` refinement constraints (e.g. `score <= 100`) dynamically inside the function's call frame. If a constraint evaluates to `false`, execution immediately aborts with a runtime `TypeError`, preventing invalid execution states.
-- The interpreter fully implements comparison operators (`<`, `<=`, `>`, `>=`, `==`, `!=`) for both integers and floats to support refinement predicates.
+- The interpreter evaluates `where` refinement constraints dynamically inside the function's call frame. If a constraint evaluates to `false`, execution immediately aborts with a runtime `TypeError`.
+- The interpreter fully implements comparison operators (`<`, `<=`, `>`, `>=`, `==`, `!=`) and logical operators (`&&`, `||`) to support refinement predicates.
+- The interpreter supports nested block scopes (`{ ... }` / `LayerKind::Block`) and handles nested `return` propagation cleanly across blocks and conditionals via a global return state tracking system.
 
 ### Variable hooks
 Reactive logic attached to a binding:
@@ -108,6 +109,9 @@ cargo check
 # run the compiler on example programs
 cargo run -- compile examples/refinement.ls
 cargo run -- compile examples/variable_hooks.ls -O3
+
+# compile with verbose parser debug logs
+cargo run -- --debug compile examples/stress_test.ls
 
 # evaluate a snippet without a file
 cargo run -- eval "function main() { var x = 30; let y = 3.5; var z: i32 = 7; }"

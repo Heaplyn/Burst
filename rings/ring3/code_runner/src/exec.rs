@@ -201,13 +201,18 @@ impl CodeRunner {
 
 
              */
+            LayerKind::Block => {
+                self.RunBlock(&Layer.Children)
+            }
+
             LayerKind::Return { Value: Expr } => {
-                if let Some(Expr) = Expr {
-                    let Val = self.EvaluateExpression(Expr)?;
-                    Ok(Val)
+                let Val = if let Some(Expr) = Expr {
+                    self.EvaluateExpression(Expr)?
                 } else {
-                    Ok(Value::Unit)
-                }
+                    Value::Unit
+                };
+                self.ReturnValue = Some(Val);
+                Ok(Value::Unit)
             }
 
             LayerKind::Conditional { Condition, HasElse } => {
@@ -224,13 +229,23 @@ impl CodeRunner {
                 }
                 Ok(Value::Unit)
             }
-            LayerKind::Loop { Label, Kind } => {
+            LayerKind::Loop { Kind, .. } => {
                 loop {
+                    // 1. If it's a while loop, check the condition first
+                    if let LoopKind::While(ConditionExpr) = Kind {
+                        let ConditionVal = self.EvaluateExpression(ConditionExpr)?;
+                        if ConditionVal == Value::Bool(false) {
+                            break;
+                        }
+                    }
+                    // 2. Execute the body block
                     let Result = self.RunBlock(&Layer.Children)?;
-                    if let Value::Unit = Result {
-                        continue;
-                    } else {
-                        break;
+                    // 3. Propagate returns out of the loop
+                    // (Any statement block that exits via a return is caught by looking at the last statement)
+                    if let Some(LastChild) = Layer.Children.last() {
+                        if let LayerKind::Return { .. } = &LastChild.Kind {
+                            return Ok(Result); // Propagate the returned value immediately up the stack
+                        }
                     }
                 }
                 Ok(Value::Unit)
@@ -248,12 +263,10 @@ impl CodeRunner {
         let mut Result = Value::Unit;
 
         for Child in Children {
-            Result = self.RunLayer(Child)?;
-
-            // Check if we hit a return
-            if let LayerKind::Return { .. } = &Child.Kind {
+            if self.ReturnValue.is_some() {
                 break;
             }
+            Result = self.RunLayer(Child)?;
         }
 
         Ok(Result)

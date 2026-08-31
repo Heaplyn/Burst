@@ -22,6 +22,7 @@ pub struct CodeRunner {
     pub(crate) Config: CompilerConfig,
     /// str function name -> built-in implementation.
     pub(crate) Builtins: HashMap<String, BuiltinFn>,
+    pub(crate) ReturnValue: Option<Value>,
 }
 
 impl CodeRunner {
@@ -34,6 +35,7 @@ impl CodeRunner {
             Trace: LayerTrace::New(),
             Config,
             Builtins,
+            ReturnValue: None,
         }
     }
 

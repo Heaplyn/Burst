@@ -20,17 +20,18 @@ Verified: `eval "function main() { var x = 30; }"` → `Execution Result: Unit`.
 **Gaps found in the code (fix in this phase):**
 - **Hook bodies never execute.** In `RunLayer`'s `VariableBinding` arm, the temporary hook layer is built with `Children: vec![]`, so `on_change`/`on_assign` functions run over an empty body.
 - **Hook order is inverted vs. the spec.** The code runs `on_assign` *before* the store and `on_change` *after*; the [Hooks Runtime](../Execution%20Model/Variable%20Behavior%20Hooks%20Runtime.md) defines `on_change` (pre-store, transforms) then store then `on_assign` (post-store).
-- **No control-flow execution.** `Conditional`, `Loop`, `MatchArm`, `Block`(as statement) hit the `_ =>` "Unsupported layer kind" error.
-- **No function calls.** `Expression::FunctionCall` is unsupported in `EvaluateExpression`.
+- **No control-flow execution.** `Loop`, `MatchArm` hit the `_ =>` "Unsupported layer kind" error (conditionals and blocks are now completed).
 - **`havoc` is commented out**; `Invalidate`/`KeepCache` are stubs.
 - **Stray debug `print!("GetVar …")`** in `ExecutionContext::GetVariable` — remove.
 - `FindMainFunction` exists but `RunCode` runs all layers instead of entering `main`.
 
 ## 4.1 Interpreter (development & testing)
 
-- [ ] Execute `Conditional` (evaluate condition → run the taken branch) and `Loop` (`While`/`For`/`Infinite`).
+- [x] Execute `Conditional` (evaluate condition → run the taken branch) and `Block` statement scopes.
+- [ ] Execute `Loop` (`While`/`For`/`Infinite`).
 - [x] Evaluate `FunctionCall`: resolve the function layer, bind args into a new `Frame`, run, return.
 - [x] Validate parameter base types and refinement constraints (`where` clauses) on function call invocation.
+- [x] Implement nested `return` statement propagation globally across blocks and conditionals.
 - [ ] Fix hook execution: populate hook-body `Children`, run `on_change` pre-store (use its return), store, then `on_assign`.
 - [ ] Implement `havoc` and re-enable the commented arm.
 - [ ] Enter via `FindMainFunction` when present.

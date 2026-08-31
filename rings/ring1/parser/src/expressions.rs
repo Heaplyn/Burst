@@ -108,6 +108,8 @@ impl Parser {
                     TokenKind::Greater => ">".to_string(),
                     TokenKind::LessEqual => "<=".to_string(),
                     TokenKind::GreaterEqual => ">=".to_string(),
+                    TokenKind::EqualEqual => "==".to_string(),
+                    TokenKind::NotEqual => "!=".to_string(),
                     TokenKind::And => "&&".to_string(),
                     TokenKind::Or => "||".to_string(),
                     TokenKind::As => "as".to_string(),
@@ -126,10 +128,11 @@ impl Parser {
         match Tok {
             TokenKind::Or => 2,
             TokenKind::And => 3,
-            TokenKind::Less | TokenKind::Greater | TokenKind::LessEqual | TokenKind::GreaterEqual => 4,
-            TokenKind::Plus | TokenKind::Minus => 5,
-            TokenKind::Star | TokenKind::Slash | TokenKind::Percent => 6,
-            TokenKind::As => 7,
+            TokenKind::EqualEqual | TokenKind::NotEqual => 4,
+            TokenKind::Less | TokenKind::Greater | TokenKind::LessEqual | TokenKind::GreaterEqual => 5,
+            TokenKind::Plus | TokenKind::Minus => 6,
+            TokenKind::Star | TokenKind::Slash | TokenKind::Percent => 7,
+            TokenKind::As => 8,
             _ => 0,
         }
     }

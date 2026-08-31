@@ -82,7 +82,12 @@ impl CodeRunner {
                 }
                 let Result = self.RunBlock(&FoundFunc.Children)?;
                 self.Context.PopFrame();
-                Ok(Result)
+                
+                if let Some(RetVal) = self.ReturnValue.take() {
+                    Ok(RetVal)
+                } else {
+                    Ok(Result)
+                }
             }
             _ => Err(CompilerError::RuntimeError("Unsupported expression".to_string())),
         }

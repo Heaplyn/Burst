@@ -87,7 +87,22 @@ impl<'a> Lexer<'a> {
                 }
             }
             '%' => TokenKind::Percent,
-            '=' => TokenKind::Equal,
+            '=' => {
+                if self.PeekChar() == Some(&'=') {
+                    self.AdvanceChar();
+                    TokenKind::EqualEqual
+                } else {
+                    TokenKind::Equal
+                }
+            }
+            '!' => {
+                if self.PeekChar() == Some(&'=') {
+                    self.AdvanceChar();
+                    TokenKind::NotEqual
+                } else {
+                    TokenKind::Not
+                }
+            }
             '(' => TokenKind::OpenParen,
             ')' => TokenKind::CloseParen,
             '{' => TokenKind::OpenBrace,
