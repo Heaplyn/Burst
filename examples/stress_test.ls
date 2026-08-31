@@ -2,7 +2,7 @@ function divide(numerator: u32 where numerator < 1000000, denominator: u32 where
     return numerator / denominator;
 }
 
-function verify_range(val: u32 where val >= 10 && val <= 1000 or 0) -> bool {
+function verify_range(val: u32 where val >= 10 && val <= 1000 else 0) -> bool {
     if (val == 0) {
         return false;
     }
