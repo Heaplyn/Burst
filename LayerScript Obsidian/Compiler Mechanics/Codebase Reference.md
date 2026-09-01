@@ -111,12 +111,12 @@ File: [`src/lib.rs`](../../rings/ring3/code_runner/src/lib.rs). The tree-walking
 
 - **`CodeRunner { Context, Trace, Config }`** with `RunCode` → `RunLayer` recursion.
 - **`EvaluateExpression`** — `LiteralInt/Float/Bool`, `Variable` (via `ExecutionContext::GetVariable`), `BinaryOp` (through `EvaluateBinaryOp`: arithmetic operators, comparison operators `< <= > >= == !=`, with divide-by-zero guard).
-- **`RunLayer`** — `Program` (run children), `Function` (`PushFrame`/`PopFrame`, `RunBlock`, `CheckType` on return), `VariableBinding` (eval init or `DefaultValue`, run hooks, `SetVariable`), `Return`. `RunBlock` stops after a `Return`.
+- **`RunLayer`** — `Program` (run children), `Function` (`PushFrame`/`PopFrame`, `RunBlock`, `CheckType` on return), `VariableBinding` (eval init or `DefaultValue`, run hooks, `SetVariable`, evaluates `where ... else` fallbacks and raises loud `TypeError` on unhandled violations), `Assignment` (evaluates value and updates target variable in context), `Conditional` (`if`/`else`), `Loop` (while / infinite with return propagation), `Return`. `RunBlock` stops after a `Return`.
 - **`ExecutionContext`** — global `Variables` + a `Stack` of `Frame`s; `SetVariable` writes to the top frame; `GetVariable` searches frames then globals. **`Value`**: `Unit/Int/Float/Bool/String/Array/Struct`.
 - **`CompilerError`** — `Lexer/Parser/Elaboration/Type/Runtime/Internal` variants; `CompilerResult<T>` alias.
-- Includes unit tests for literal/binary evaluation and refinement checks.
+- Includes built-in functions (`print`, `println`, `type`) and unit tests for literal/binary evaluation and refinement checks.
 
-> **Known gaps / bugs:** hook bodies run with empty `Children` (so hooks are effectively no-ops); `on_assign`/`on_change` fire in reverse of the [Hooks Runtime](../Execution%20Model/Variable%20Behavior%20Hooks%20Runtime.md) spec; no `Loop`/`MatchArm` execution; `havoc` arm commented out; stray `print!("GetVar …")` in `GetVariable`; `FindMainFunction` unused. See [[Phase 4 - Execution Engine]].
+> **Known gaps / bugs:** hook bodies run with empty `Children` (so hooks are effectively no-ops); `on_assign`/`on_change` fire in reverse of the [Hooks Runtime](../Execution%20Model/Variable%20Behavior%20Hooks%20Runtime.md) spec; no `MatchArm` execution; `havoc` arm commented out; `FindMainFunction` unused. See [[Phase 4 - Execution Engine]].
 
 ---
 

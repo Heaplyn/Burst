@@ -29,14 +29,19 @@ let mask: b16 = 0xFFFF;
 
 Hooks attach reactive logic to a binding. They live in a `{ ... }` block after the initializer and may be placed on both `var` and `let` (a `let` hook runs once, at initialization).
 
+### Design Principle: Observability vs Hidden Control Flow
+Hooks are designed for **reactivity, telemetry, tracing, and boundary validation**, not for hiding business logic or silent data corruption:
+- State transitions (like game mechanics, damage calculations, and state machines) should be modeled explicitly in functions and types.
+- Hooks should be used to observe changes, emit telemetry, trigger hardware interrupts, or reject invalid data at FFI boundaries.
+
 ### `on_change`
 
-Runs **before** the store; its return value is what gets written. Ideal for clamping and validation.
+Runs **before** the store; its return value is what gets written. Ideal for sanitization at hardware/FFI boundaries or validating invariants:
 
 ```layerscript
-var health: f64 = 100.0 {
-    on_change: function(new: f64, old: f64) -> f64 {
-        if (new < 0.0) { return 0.0; }     // clamp to floor
+var raw_packet_len: u32 = 0 {
+    on_change: function(new: u32, old: u32) -> u32 {
+        if (new > 1500) { panic; } // Reject MTU overflow at FFI boundary
         return new;
     }
 }
@@ -44,7 +49,7 @@ var health: f64 = 100.0 {
 
 ### `on_read`
 
-Runs when the value is accessed. Useful for lazy computation or tracing.
+Runs when the value is accessed. Useful for lazy computation or tracing:
 
 ```layerscript
 var counter: u64 = 0 {
@@ -57,7 +62,7 @@ var counter: u64 = 0 {
 
 ### `on_assign`
 
-Runs **after** the store commits. It cannot change the stored value — use it for notifications and side effects.
+Runs **after** the store commits. It cannot change the stored value — use it for notifications, hardware interrupts, and side effects:
 
 ```layerscript
 var dirty: bool = false {

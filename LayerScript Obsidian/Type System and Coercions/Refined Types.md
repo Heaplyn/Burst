@@ -32,6 +32,28 @@ function get<T, N: usize>(arr: [T; N], i: usize where i < N) -> T {
 
 The standard library predefines the common ones — `NonZero<T>`, `Positive<T>`, `Index<N>`, `Aligned<T, A>` — documented in the [Built-in Types Reference](../API%20and%20Standard%20Library/Built-in%20Types%20Reference.md).
 
+### Explicit Fallbacks (`else` Clauses)
+
+When external inputs or dynamic parameters may legitimately exceed ideal bounds, LayerScript supports declarative fallback expressions directly in the type refinement:
+
+```layerscript
+// If sensor_val exceeds 100 at runtime, it evaluates and falls back to 100.
+function clamp_read(sensor_val: u32 where sensor_val <= 100 else 100) -> u32 {
+    return sensor_val;
+}
+```
+
+- **Without `else`**: A failed constraint in `@strict` mode is a compile-time rejection; in safe runtime execution, it aborts loudly with a `TypeError` (no silent corruption or hidden failure).
+- **With `else`**: If the predicate evaluates to `false`, the fallback expression is evaluated and bound to the parameter instead.
+
+### Why Refinement Types Replace Untyped `null`
+
+In traditional languages (C#, Java, JavaScript), `null` is an ambient inhabitant of every reference type, causing hidden runtime null-pointer exceptions (the "billion-dollar mistake"). 
+
+LayerScript eliminates ambient untyped `null`. Instead:
+1. **Compile-Time Validity**: Types are guaranteed non-null and valid by default via SMT proofs.
+2. **Explicit Fallibility**: Unhandled or optional outcomes are expressed via explicit result states / enums or refinement fallbacks, allowing long-running programs to fail gracefully without hidden crashes.
+
 ---
 
 ## 2. SMT-LIB v2 Translation

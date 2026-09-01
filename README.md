@@ -75,22 +75,24 @@ Refinement types let you attach a logical predicate to a type. Given `x: u32 whe
 - If the answer is **`unsat`** ("never"), the compiler **erases the check** and emits naked machine code.
 - If it's **`sat`**, compilation fails with a concrete counterexample.
 - Under `@silent`, an undecidable case falls back to a runtime check; under `@strict`, it's a hard error.
+- **Explicit Fallbacks**: Refinements support explicit fallbacks via `val: u32 where val <= 100 else 100`, providing deterministic recovery without ambient, untyped `null` pointer vulnerabilities.
 
 Result: safe array indexing, non-null pointers, alignment guarantees — all with **zero runtime overhead**.
 
 ### Runtime Interpreter Enforcement
 During execution in the tree-walking interpreter (`code_runner`):
 - Whenever a function is invoked, the interpreter performs a runtime check on each argument to verify it matches the parameter's base type (including bit-precise integer sizes like `u32`/`i32`).
-- The interpreter evaluates `where` refinement constraints dynamically inside the function's call frame. If a constraint evaluates to `false`, execution immediately aborts with a runtime `TypeError`.
-- The interpreter fully implements comparison operators (`<`, `<=`, `>`, `>=`, `==`, `!=`) and logical operators (`&&`, `||`) to support refinement predicates.
+- The interpreter evaluates `where` refinement constraints dynamically inside the function's call frame. If a constraint evaluates to `false` and no `else` fallback is declared, execution immediately fails loudly with a runtime `TypeError`.
+- The interpreter fully implements comparison operators (`<`, `<=`, `>`, `>=`, `==`, `!=`), logical operators (`&&`, `||`), and disjunctions (`or`).
+- Mutable variable assignment (`LayerKind::Assignment`) is fully supported across local and global scopes.
 - The interpreter supports nested block scopes (`{ ... }` / `LayerKind::Block`) and handles nested `return` propagation cleanly across blocks and conditionals via a global return state tracking system.
 - The interpreter supports built-in functions such as `type(arg)`, which returns the string representation of any value's runtime type (e.g., `"int"`, `"float"`, `"bool"`, `"string"`, `"unit"`).
 
 ### Variable hooks
 Reactive logic attached to a binding:
-- `on_change` runs **before** the store; its return is what gets stored (clamping, validation).
+- `on_change` runs **before** the store; its return is what gets stored (validation, FFI sanitization).
 - `on_read` runs when the value is accessed (lazy loading, tracing).
-- `on_assign` runs **after** the store commits (notifications).
+- `on_assign` runs **after** the store commits (notifications, telemetry).
 
 Anything a hook does that the observability analysis proves has no effect gets folded away, so you can write hooks freely for correctness.
 
@@ -121,6 +123,7 @@ cargo check
 
 # run the compiler on example programs
 cargo run -- compile examples/refinement.ls
+cargo run -- compile examples/error_handling_and_state.ls
 cargo run -- compile examples/variable_hooks.ls -O3
 
 # compile with verbose parser debug logs
@@ -133,7 +136,7 @@ cargo run -- eval "function main() { var x = 30; let y = 3.5; var z: i32 = 7; }"
 cargo run -- --help
 ```
 
-The end-to-end pipeline (lex → parse → elaborate → run) is verified for simple programs and prints `Verification & Compilation Successful!` followed by the program execution output. Any runtime refinement violations are caught and printed as type errors:
+The end-to-end pipeline (lex → parse → elaborate → run) is verified for simple programs and prints `Verification & Compilation Successful!` followed by the program execution output. Any runtime refinement violations without fallbacks are caught and printed as type errors:
 
 ```text
 SCORE 85
