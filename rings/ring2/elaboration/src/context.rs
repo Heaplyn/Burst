@@ -25,7 +25,7 @@ impl ElaborationContext {
     pub fn ElaborateLayer(&mut self, L: &Layer) -> Result<(), String> {
         match &L.Kind {
             LayerKind::Function { Name, Params, .. } => {
-                println!("Elaborating function: {}", Name);
+                //println!("Elaborating function: {}", Name);
                 for p in Params {
                     self.KnownVars.insert(p.Name.clone());
                     if let Type::Where(_base, constraint, _) = &p.Type_ {
@@ -47,7 +47,7 @@ impl ElaborationContext {
             }
             LayerKind::Conditional { Condition, .. } => {
                 let smt = self.TranslateToSmt(Condition)?;
-                println!("   Branch Constraint: {}", smt);
+                //println!("   Branch Constraint: {}", smt);
             }
             _ => {}
         }

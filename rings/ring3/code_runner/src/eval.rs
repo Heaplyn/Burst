@@ -81,10 +81,12 @@ impl CodeRunner {
                                     self.Context.SetVariable(&P.Name, FbVal, false);
                                     continue;
                                 }
-                                // No fallback: silently no-op the call (existing
-                                // behavior).
+                                // No fallback: refinement check failed in safe runtime execution.
                                 self.Context.PopFrame();
-                                return Ok(Value::Unit);
+                                return Err(CompilerError::TypeError(format!(
+                                    "Parameter '{}' failed refinement check in call to '{}'",
+                                    P.Name, Name
+                                )));
                             }
                         }
                     }

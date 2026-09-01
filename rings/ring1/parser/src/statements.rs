@@ -23,7 +23,7 @@ impl Parser {
             Some(TokenKind::Let(true) | TokenKind::Let(false)) => {
                 let TokenBufferPrevious = self.Peek();
                 if config::DebugMode.load(std::sync::atomic::Ordering::Relaxed) {
-                    println!("Token: {:?}", TokenBufferPrevious);
+                    //println!("Token: {:?}", TokenBufferPrevious);
                 }
                 if TokenBufferPrevious.is_none() {
                     return Err("Unexpected end of input".to_string());
@@ -35,7 +35,7 @@ impl Parser {
                     // handle immutable let binding
                 }
                 if config::DebugMode.load(std::sync::atomic::Ordering::Relaxed) {
-                    println!("Var binding");
+                    //println!("Var binding");
                 }
                 self.ParseVariableBinding()
             }
@@ -193,7 +193,7 @@ impl Parser {
             Value: InitialValue.clone().unwrap_or(Expression::Variable("Invalid".to_string())),
         };
         if config::DebugMode.load(std::sync::atomic::Ordering::Relaxed) {
-            println!("Var added: {:?}", var_def);
+            //println!("Var added: {:?}", var_def);
         }
         self.CurrentLayer.AddVariable(var_def);
 

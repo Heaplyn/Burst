@@ -13,7 +13,7 @@ use lexer::token::*;
 fn RunPipeline(SourceCode: &str, Verbose: bool) {
     // 1. Run the Lexer
     let Tokens: Vec<_> = LexerStruct::New(SourceCode).collect();
-    if Verbose {
+    if Verbose == true {
         println!("Tokens: {:?}", Tokens);
     }
 
@@ -42,7 +42,7 @@ fn RunPipeline(SourceCode: &str, Verbose: bool) {
                 eprintln!("Semantic: {:?}", e);
             }
             for e in &Elab.Typed.Errors {
-                eprintln!("Type:     {:?}", e);
+                //eprintln!("Type:     {:?}", e);
             }
             if Verbose {
                 println!(
@@ -81,9 +81,9 @@ fn RunPipeline(SourceCode: &str, Verbose: bool) {
 fn main() {
     // Parse arguments using clap
     let Args = Cli::ParseArgs();
-
     global_config::Verbose.store(Args.Verbose, std::sync::atomic::Ordering::Relaxed);
     global_config::DebugMode.store(Args.Debug, std::sync::atomic::Ordering::Relaxed);
+    
 
     match &Args.Command {
         Commands::Compile { Input, OptLevel } => {

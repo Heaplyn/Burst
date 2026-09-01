@@ -59,7 +59,7 @@ impl Parser {
                 let (ParamName, ParamType) = self.ParseNameAndType("parameter")?;
                 let Val: Type;
                 if config::DebugMode.load(std::sync::atomic::Ordering::Relaxed) {
-                    println!("Param Name: {:?}, Param Type: {:?}", ParamName, ParamType);
+                    //println!("Param Name: {:?}, Param Type: {:?}", ParamName, ParamType);
                 }
                 if ParamType == Type::Null {
                     //self.Advance();

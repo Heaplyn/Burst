@@ -49,7 +49,7 @@ impl Parser {
                 _ => unreachable!(),
             };
             self.Advance(); // consume ':''
-            println!("Parsing type after ':'");
+            //println!("Parsing type after ':'");
             let t = self.ParseType()?;
             
             (n, t)
@@ -114,7 +114,7 @@ impl Parser {
                 let _Left = self.ParseType()?;
                 let Right = self.Peek();
                 if let Some(Token { Kind: TokenKind::Ident(_), .. }) = Right {
-                    println!("Self type: {:?}", self.ParseType()?);
+                   // println!("Self type: {:?}", self.ParseType()?);
                     return Ok(self.ParseType()?);
                 } else {
                     return Err("Expected type after '='".to_string());
@@ -141,7 +141,7 @@ impl Parser {
         let CurrentKind = CurrentPeek.as_ref().map(|t| &t.Kind).unwrap_or(&self.Peek().as_ref().map(|t| &t.Kind).unwrap_or(&TokenKind::End));
         
         if config::DebugMode.load(std::sync::atomic::Ordering::Relaxed) {
-            println!("CurrentKind: {:?}", CurrentKind);
+            //println!("CurrentKind: {:?}", CurrentKind);
         }
         if CurrentKind == &TokenKind::Where {
             self.Advance(); // consume 'where'

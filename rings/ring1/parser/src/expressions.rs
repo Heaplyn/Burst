@@ -87,7 +87,7 @@ impl Parser {
     /// Handles operator precedence for math and logic (precedence climbing).
     pub fn ParseBinary(&mut self, Precedence: u8) -> Result<Expression, String> {
         if config::DebugMode.load(std::sync::atomic::Ordering::Relaxed) {
-            println!("Self: {:?}", self.Peek());
+            //println!("Self: {:?}", self.Peek());
         }
         let mut Expr = self.ParsePrimary()?;
 

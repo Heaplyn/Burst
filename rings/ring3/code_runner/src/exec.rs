@@ -274,6 +274,17 @@ impl CodeRunner {
                 Ok(Value::Unit)
             }
 
+            LayerKind::Assignment { Target, Value: ValExpr } => {
+                let NewVal = self.EvaluateExpression(ValExpr)?;
+                match Target {
+                    Expression::Variable(Name) => {
+                        self.Context.SetVariable(Name, NewVal, true);
+                        Ok(Value::Unit)
+                    }
+                    _ => Err(CompilerError::RuntimeError("Assignment target must be a variable".to_string())),
+                }
+            }
+
             _ => Err(CompilerError::RuntimeError(format!(
                 "Unsupported layer kind: {:?}",
                 Layer.Kind

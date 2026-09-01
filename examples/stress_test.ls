@@ -53,6 +53,9 @@ println('Pipeline(100) result:', res1);
 let res2 = run_pipeline(25);
 println('Pipeline(25) result:', res2);
 
+let Thing = verify_range(2);
+println(Thing);
+
 // Direct checks of built-ins and boolean literals
 println('--- Builtins & Literals Verification ---');
 let t_bool = type(true);
